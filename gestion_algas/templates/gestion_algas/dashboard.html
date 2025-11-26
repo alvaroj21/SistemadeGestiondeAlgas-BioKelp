@@ -1,0 +1,110 @@
+{% extends "gestion_algas/base.html" %}
+
+{% block title %}Dashboard - Sistema Algas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Dashboard Principal</h2>
+        <p class="text-muted">Resumen de actividades del sistema</p>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Registros</h5>
+                <h2 class="card-text">{{ total_registros }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Producción Semanal</h5>
+                <h2 class="card-text">{{ produccion_semanal|floatformat:2 }} kg</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Mi Rol</h5>
+                <h4 class="card-text text-capitalize">{{ user.rol }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            {% if user.rol == 'Administrador' or user.rol == 'Trabajador' %}
+            <a href="{% url 'registro_produccion' %}" class="btn btn-success me-md-2">
+                Nuevo Registro
+            </a>
+            {% endif %}
+            
+            {% if user.rol == 'Administrador' or user.rol == 'Socio' %}
+            <a href="{% url 'reportes' %}" class="btn btn-outline-primary">
+                Ver Reportes
+            </a>
+            {% endif %}
+            
+            {% if user.rol == 'Administrador' %}
+            <a href="{% url 'usuarios' %}" class="btn btn-outline-secondary">
+                Gestionar Usuarios
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Últimos Registros -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Últimos Registros de Producción</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimos_registros %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                {% if user.rol == 'Administrador' %}
+                                <th>Trabajador</th>
+                                {% endif %}
+                                <th>Tipo Alga</th>
+                                <th>Cantidad (kg)</th>
+                                <th>Sector</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registro in ultimos_registros %}
+                            <tr>
+                                <td>{{ registro.fecha_registro|date:"d/m/Y H:i" }}</td>
+                                {% if user.rol == 'Administrador' %}
+                                <td>{{ registro.usuario.username }}</td>
+                                {% endif %}
+                                <td>{{ registro.tipo_alga.nombre }}</td>
+                                <td>{{ registro.cantidad_cosechada|floatformat:2 }}</td>
+                                <td>{{ registro.sector }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No hay registros de producción aún.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

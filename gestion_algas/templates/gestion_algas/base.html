@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BioKelp - Sistema de Gestión{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                BioKelp
+            </a>
+            
+            {% if request.session.user_logged %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                    </li>
+                    {% if request.session.rol == 'Administrador' or request.session.rol == 'Trabajador' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'registro_produccion' %}">Registrar Producción</a>
+                    </li>
+                    {% endif %}
+                    {% if request.session.rol == 'Administrador' or request.session.rol == 'Socio' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'reportes' %}">Reportes</a>
+                    </li>
+                    {% endif %}
+                    {% if request.session.rol == 'Administrador' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'capacidad_productiva' %}">Capacidad</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'tipos_alga' %}">Tipos de Alga</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'configuracion_reportes' %}">Config. Reportes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'usuarios' %}">Usuarios</a>
+                    </li>
+                    {% endif %}
+                    {% if request.session.rol == 'Socio' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'configuracion_reportes' %}">Ver Reportes</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3">{{ request.session.username }} ({{ request.session.rol }})</span>
+                    <a class="btn btn-outline-light btn-sm" href="{% url 'logout' %}">
+                        Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

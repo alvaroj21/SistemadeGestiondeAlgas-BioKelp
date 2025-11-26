@@ -1,0 +1,179 @@
+{% extends "gestion_algas/base.html" %}
+
+{% block title %}Gestión de Usuarios - Sistema Algas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Gestión de Usuarios</h2>
+        <p class="text-muted">Administración de cuentas del sistema</p>
+    </div>
+</div>
+
+<!-- Formulario de Creación -->
+<div class="row mb-4">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Crear Nuevo Usuario</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.telefono.label_tag }}
+                        {{ form.telefono }}
+                        {% if form.telefono.errors %}
+                            <div class="text-danger">{{ form.telefono.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.password.label_tag }}
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="text-danger">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.password2.label_tag }}
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <div class="text-danger">{{ form.password2.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.rol.label_tag }}
+                        {{ form.rol }}
+                        {% if form.rol.errors %}
+                            <div class="text-danger">{{ form.rol.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            Crear Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Listado de Usuarios -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Usuarios Registrados ({{ usuarios|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if usuarios %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                            <tr>
+                                <td>{{ usuario.username }}</td>
+                                <td>{{ usuario.username }}</td>
+                                <td>{{ usuario.email }}</td>
+                                <td>
+                                    {% if usuario.rol == 'Administrador' %}
+                                        <span class="badge bg-danger">Administrador</span>
+                                    {% elif usuario.rol == 'Trabajador' %}
+                                        <span class="badge bg-primary">Trabajador</span>
+                                    {% elif usuario.rol == 'Socio' %}
+                                        <span class="badge bg-info">Socio</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ usuario.rol }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>-</td>
+                                <td>
+                                    {% if usuario.id != user.id %}
+                                    <form method="POST" action="{% url 'eliminar_usuario' usuario.id %}" 
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Estás seguro de eliminar a {{ usuario.username }}?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            🗑️ Eliminar
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Tú</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No hay usuarios registrados aún.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h3 class="text-danger">
+                    {{ usuarios|length }}
+                </h3>
+                <p class="mb-0">Total Usuarios</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h3 class="text-primary">
+                    {% with usuarios|length as total %}{{ total }}{% endwith %}
+                </h3>
+                <p class="mb-0">Usuarios Activos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h3 class="text-info">
+                    -
+                </h3>
+                <p class="mb-0">Último Registro</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

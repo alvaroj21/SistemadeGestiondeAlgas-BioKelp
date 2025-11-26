@@ -1,0 +1,144 @@
+{% extends 'gestion_algas/base.html' %}
+
+{% block title %}Capacidad Productiva - BioKelp{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Gestión de Capacidad Productiva</h2>
+        <p class="text-muted">Administra la capacidad instalada y disponibilidad mensual</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                {% if editando %}
+                    Editar Capacidad
+                {% else %}
+                    Registrar Nueva Capacidad
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.mes.id_for_label }}" class="form-label">{{ form.mes.label }}</label>
+                        {{ form.mes }}
+                        {% if form.mes.errors %}
+                            <div class="text-danger">{{ form.mes.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{{ form.mes.help_text }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.capacidad_mensual_maxima.id_for_label }}" class="form-label">{{ form.capacidad_mensual_maxima.label }}</label>
+                        {{ form.capacidad_mensual_maxima }}
+                        {% if form.capacidad_mensual_maxima.errors %}
+                            <div class="text-danger">{{ form.capacidad_mensual_maxima.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.capacidad_anual_maxima.id_for_label }}" class="form-label">{{ form.capacidad_anual_maxima.label }}</label>
+                        {{ form.capacidad_anual_maxima }}
+                        {% if form.capacidad_anual_maxima.errors %}
+                            <div class="text-danger">{{ form.capacidad_anual_maxima.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.volumen_producido.id_for_label }}" class="form-label">{{ form.volumen_producido.label }}</label>
+                        {{ form.volumen_producido }}
+                        {% if form.volumen_producido.errors %}
+                            <div class="text-danger">{{ form.volumen_producido.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.volumen_comprometido.id_for_label }}" class="form-label">{{ form.volumen_comprometido.label }}</label>
+                        {{ form.volumen_comprometido }}
+                        {% if form.volumen_comprometido.errors %}
+                            <div class="text-danger">{{ form.volumen_comprometido.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">{{ form.observaciones.label }}</label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="text-danger">{{ form.observaciones.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if editando %}Actualizar{% else %}Registrar{% endif %}
+                        </button>
+                        {% if editando %}
+                            <a href="{% url 'capacidad_productiva' %}" class="btn btn-secondary">Cancelar</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                Capacidades Registradas
+            </div>
+            <div class="card-body">
+                {% if capacidades %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mes</th>
+                                <th>Cap. Mensual</th>
+                                <th>Producido</th>
+                                <th>Disponible</th>
+                                <th>% Utilizado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cap in capacidades %}
+                            <tr>
+                                <td>{{ cap.mes|date:"m/Y" }}</td>
+                                <td>{{ cap.capacidad_mensual_maxima|floatformat:2 }} kg</td>
+                                <td>{{ cap.volumen_producido|floatformat:2 }} kg</td>
+                                <td>
+                                    <span class="badge bg-{% if cap.disponibilidad_mensual > 0 %}success{% else %}danger{% endif %}">
+                                        {{ cap.disponibilidad_mensual|floatformat:2 }} kg
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ cap.porcentaje_utilizado }}%</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'editar_capacidad' cap.id %}" class="btn btn-sm btn-warning">Editar</a>
+                                    <form method="post" action="{% url 'eliminar_capacidad' cap.id %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                onclick="return confirm('¿Eliminar esta capacidad?')">
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No hay capacidades registradas aún.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

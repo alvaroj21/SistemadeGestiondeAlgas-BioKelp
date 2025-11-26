@@ -1,0 +1,165 @@
+{% extends 'gestion_algas/base.html' %}
+
+{% block title %}Reporte Personalizado - {{ configuracion.empresa }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Reporte de Producción</h2>
+                <h4 class="text-muted">{{ configuracion.empresa }} - {{ configuracion.pais }}</h4>
+            </div>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary">Imprimir</button>
+                <a href="{% url 'configuracion_reportes' %}" class="btn btn-secondary">Volver</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Fecha de Generación:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</p>
+                <p><strong>Período:</strong> {{ fecha_desde|date:"d/m/Y" }} - {{ fecha_hasta|date:"d/m/Y" }}</p>
+                <p><strong>Contacto:</strong> {{ configuracion.contacto|default:"N/A" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Email:</strong> {{ configuracion.email }}</p>
+                <p><strong>Unidad de Medida:</strong> {{ configuracion.get_unidad_medida_display }}</p>
+                <p><strong>Formato:</strong> {{ configuracion.get_formato_preferido_display }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if configuracion.mostrar_capacidad_instalada and capacidad_actual %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Capacidad Instalada</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h6 class="text-muted">Capacidad Mensual</h6>
+                <h3>{{ capacidad_actual.capacidad_mensual_maxima|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <p>{{ configuracion.get_unidad_medida_display }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Capacidad Anual</h6>
+                <h3>{{ capacidad_actual.capacidad_anual_maxima|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <p>{{ configuracion.get_unidad_medida_display }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Volumen Producido</h6>
+                <h3 class="text-success">{{ capacidad_actual.volumen_producido|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <p>{{ configuracion.get_unidad_medida_display }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">% Utilizado</h6>
+                <h3 class="text-info">{{ capacidad_actual.porcentaje_utilizado }}%</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if configuracion.mostrar_disponibilidad and capacidad_actual %}
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Disponibilidad</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <h6 class="text-muted">Volumen Comprometido</h6>
+                <h3 class="text-warning">{{ capacidad_actual.volumen_comprometido|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <p>{{ configuracion.get_unidad_medida_display }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Disponibilidad Mensual</h6>
+                <h3 class="text-success">{{ capacidad_actual.disponibilidad_mensual|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <p>{{ configuracion.get_unidad_medida_display }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">% Disponible</h6>
+                <h3 class="text-success">{{ capacidad_actual.porcentaje_disponible }}%</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if configuracion.mostrar_historial_produccion and produccion_historial %}
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Historial de Producción (Últimos {{ configuracion.periodo_historial_meses }} meses)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tipo de Alga</th>
+                        <th>Total Cosechado</th>
+                        <th>Total Volumen Procesado</th>
+                        <th>Registros</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in produccion_historial %}
+                    <tr>
+                        <td><strong>{{ item.tipo_alga__nombre }}</strong></td>
+                        <td>{{ item.total_cosechado|floatformat:2|mul:factor_conversion|floatformat:2 }} {{ configuracion.get_unidad_medida_display }}</td>
+                        <td>
+                            {% if item.total_volumen %}
+                                {{ item.total_volumen|floatformat:2 }} litros
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ item.total_registros }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th>TOTAL</th>
+                        <th>
+                            {% widthratio produccion_historial.0.total_cosechado 1 factor_conversion as total_convertido %}
+                            {{ total_convertido|floatformat:2 }} {{ configuracion.get_unidad_medida_display }}
+                        </th>
+                        <th colspan="2"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body text-center text-muted">
+        <p class="mb-0">
+            <small>
+                Este reporte fue generado automáticamente el {{ fecha_generacion|date:"d/m/Y" }} a las {{ fecha_generacion|date:"H:i" }}.
+                <br>
+                BioKelp - Reporte personalizado para {{ configuracion.empresa }}
+            </small>
+        </p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+@media print {
+    .btn, nav, .navbar {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}

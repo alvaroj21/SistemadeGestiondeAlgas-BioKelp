@@ -1,0 +1,62 @@
+{% extends "gestion_algas/base.html" %}
+
+{% block title %}Registro de Producción - Sistema Algas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Registro de Producción Diaria</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.tipo_alga.label_tag }}
+                            {{ form.tipo_alga }}
+                            {% if form.tipo_alga.errors %}
+                                <div class="text-danger">{{ form.tipo_alga.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.sector.label_tag }}
+                            {{ form.sector }}
+                            {% if form.sector.errors %}
+                                <div class="text-danger">{{ form.sector.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.cantidad_cosechada.label_tag }}
+                            {{ form.cantidad_cosechada }}
+                            {% if form.cantidad_cosechada.errors %}
+                                <div class="text-danger">{{ form.cantidad_cosechada.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {# Eliminado campo volumen_procesado #}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.observaciones.label_tag }}
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                            <div class="text-danger">{{ form.observaciones.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        <button type="submit" class="btn btn-success">Guardar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

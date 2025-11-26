@@ -1,0 +1,247 @@
+{% extends "gestion_algas/base.html" %}
+
+{% block title %}Tipos de Alga - Sistema Algas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Gestión de Tipos de Alga</h2>
+        <p class="text-muted">Administración del catálogo de tipos de algas</p>
+    </div>
+</div>
+
+<!-- Formulario de Creación/Edición -->
+<div class="row mb-4">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    {% if editando %}
+                        Editar Tipo de Alga
+                    {% else %}
+                        Crear Nuevo Tipo de Alga
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" {% if editando %}action="{% url 'editar_tipo_alga' tipo_alga.id %}"{% endif %}>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        {{ form.nombre.label_tag }}
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="text-danger small">{{ form.nombre.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted">Ej: Cochayuyo, Luche, Pelillo</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.factor_conversion.label_tag }}
+                        {{ form.factor_conversion }}
+                        {% if form.factor_conversion.errors %}
+                            <div class="text-danger small">{{ form.factor_conversion.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted">Factor de conversión para cálculos (por defecto 1.00)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.descripcion.label_tag }}
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger small">{{ form.descripcion.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.activo }}
+                        {{ form.activo.label_tag }}
+                        {% if form.activo.errors %}
+                            <div class="text-danger small">{{ form.activo.errors }}</div>
+                        {% endif %}
+                        <small class="text-muted d-block">Solo los tipos activos aparecen en el registro de producción</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            {% if editando %}
+                                Actualizar Tipo de Alga
+                            {% else %}
+                                Crear Tipo de Alga
+                            {% endif %}
+                        </button>
+                        {% if editando %}
+                        <a href="{% url 'tipos_alga' %}" class="btn btn-secondary">
+                            Cancelar
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Listado de Tipos de Alga -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tipos de Alga Registrados ({{ tipos_alga|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if tipos_alga %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Factor Conv.</th>
+                                <th>Estado</th>
+                                <th>Registros</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tipo in tipos_alga %}
+                            <tr>
+                                <td>
+                                    <strong>{{ tipo.nombre }}</strong>
+                                    {% if tipo.descripcion %}
+                                    <br><small class="text-muted">{{ tipo.descripcion|truncatewords:10 }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ tipo.factor_conversion }}</td>
+                                <td>
+                                    {% if tipo.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ tipo.registros.count }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'editar_tipo_alga' tipo.id %}" 
+                                           class="btn btn-outline-primary"
+                                           title="Editar">
+                                            Editar
+                                        </a>
+                                        
+                                        <form method="POST" 
+                                              action="{% url 'toggle_tipo_alga' tipo.id %}" 
+                                              style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="btn btn-outline-warning"
+                                                    title="{% if tipo.activo %}Desactivar{% else %}Activar{% endif %}">
+                                                {% if tipo.activo %}Desactivar{% else %}Activar{% endif %}
+                                            </button>
+                                        </form>
+                                        
+                                        {% if tipo.registros.count == 0 %}
+                                        <form method="POST" 
+                                              action="{% url 'eliminar_tipo_alga' tipo.id %}" 
+                                              style="display: inline;"
+                                              onsubmit="return confirm('¿Estás seguro de eliminar {{ tipo.nombre }}?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger" title="Eliminar">
+                                                Borrar
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <button class="btn btn-outline-secondary" disabled title="No se puede eliminar (tiene registros)">
+                                            borrar
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <h5>No hay tipos de alga registrados</h5>
+                    <p class="mb-0">Crea el primer tipo de alga usando el formulario de la izquierda.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h3 class="text-success">
+                    {{ tipos_alga|length }}
+                </h3>
+                <p class="mb-0">Total Tipos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h3 class="text-primary">
+                    {% with activos=0 %}
+                    {% for tipo in tipos_alga %}
+                        {% if tipo.activo %}{% with activos=activos|add:1 %}{% endwith %}{% endif %}
+                    {% endfor %}
+                    {{ activos }}
+                    {% endwith %}
+                </h3>
+                <p class="mb-0">Tipos Activos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-secondary">
+            <div class="card-body text-center">
+                <h3 class="text-secondary">
+                    {% with total=0 %}
+                    {% for tipo in tipos_alga %}
+                        {% with total=total|add:tipo.registros.count %}{% endwith %}
+                    {% endfor %}
+                    {{ total }}
+                    {% endwith %}
+                </h3>
+                <p class="mb-0">Total Registros</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h3 class="text-info">
+                    {% if tipos_alga %}
+                    {{ tipos_alga.0.fecha_creacion|date:"d/m/Y" }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </h3>
+                <p class="mb-0">Último Registro</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ayuda -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-light">
+            <h6>Consejos de uso:</h6>
+            <ul class="mb-0 small">
+                <li><strong>Crear tipos antes de registrar producción:</strong> Debes tener al menos un tipo de alga activo para poder registrar producción.</li>
+                <li><strong>Desactivar en lugar de eliminar:</strong> Si un tipo tiene registros asociados, no se puede eliminar. Desactívalo para ocultarlo.</li>
+                <li><strong>Factor de conversión:</strong> Útil para cálculos especiales según el tipo de alga (por defecto 1.00).</li>
+                <li><strong>Ejemplos de nombres:</strong> Cochayuyo, Luche, Pelillo, Huiro, Ulte, Agar-agar</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

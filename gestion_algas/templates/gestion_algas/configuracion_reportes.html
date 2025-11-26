@@ -1,0 +1,192 @@
+{% extends 'gestion_algas/base.html' %}
+
+{% block title %}Configuración de Reportes - BioKelp{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Configuración de Reportes Personalizados</h2>
+        <p class="text-muted">Gestiona configuraciones de reportes para clientes internacionales</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    {% if puede_editar %}
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                {% if editando %}
+                    Editar Configuración
+                {% else %}
+                    Nueva Configuración
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h6 class="text-muted mb-3">Información del Cliente</h6>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.empresa.id_for_label }}" class="form-label">{{ form.empresa.label }}</label>
+                        {{ form.empresa }}
+                        {% if form.empresa.errors %}
+                            <div class="text-danger">{{ form.empresa.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.pais.id_for_label }}" class="form-label">{{ form.pais.label }}</label>
+                        {{ form.pais }}
+                        {% if form.pais.errors %}
+                            <div class="text-danger">{{ form.pais.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.contacto.id_for_label }}" class="form-label">{{ form.contacto.label }}</label>
+                        {{ form.contacto }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <h6 class="text-muted mb-3 mt-4">Preferencias de Reporte</h6>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.unidad_medida.id_for_label }}" class="form-label">{{ form.unidad_medida.label }}</label>
+                        {{ form.unidad_medida }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.formato_preferido.id_for_label }}" class="form-label">{{ form.formato_preferido.label }}</label>
+                        {{ form.formato_preferido }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.periodo_historial_meses.id_for_label }}" class="form-label">{{ form.periodo_historial_meses.label }}</label>
+                        {{ form.periodo_historial_meses }}
+                    </div>
+                    
+                    <h6 class="text-muted mb-3 mt-4">Información a Incluir</h6>
+                    
+                    <div class="form-check mb-2">
+                        {{ form.mostrar_capacidad_instalada }}
+                        <label class="form-check-label" for="{{ form.mostrar_capacidad_instalada.id_for_label }}">
+                            {{ form.mostrar_capacidad_instalada.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        {{ form.mostrar_disponibilidad }}
+                        <label class="form-check-label" for="{{ form.mostrar_disponibilidad.id_for_label }}">
+                            {{ form.mostrar_disponibilidad.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        {{ form.mostrar_historial_produccion }}
+                        <label class="form-check-label" for="{{ form.mostrar_historial_produccion.id_for_label }}">
+                            {{ form.mostrar_historial_produccion.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        {{ form.activo }}
+                        <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                            {{ form.activo.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            {% if editando %}Actualizar{% else %}Crear Configuración{% endif %}
+                        </button>
+                        {% if editando %}
+                            <a href="{% url 'configuracion_reportes' %}" class="btn btn-secondary">Cancelar</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <strong>Modo solo lectura:</strong> Solo los administradores pueden crear o modificar configuraciones de reportes.
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="{% if puede_editar %}col-md-7{% else %}col-md-12{% endif %}">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                Configuraciones Registradas
+            </div>
+            <div class="card-body">
+                {% if configuraciones %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Empresa</th>
+                                <th>País</th>
+                                <th>Formato</th>
+                                <th>Unidad</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for config in configuraciones %}
+                            <tr>
+                                <td>{{ config.empresa }}</td>
+                                <td>{{ config.pais }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ config.get_formato_preferido_display }}</span>
+                                </td>
+                                <td>{{ config.get_unidad_medida_display }}</td>
+                                <td>
+                                    {% if config.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'generar_reporte_personalizado' config.id %}" 
+                                       class="btn btn-sm btn-info" title="Generar Reporte">
+                                        Generar
+                                    </a>
+                                    {% if puede_editar %}
+                                    <a href="{% url 'editar_configuracion' config.id %}" 
+                                       class="btn btn-sm btn-warning">
+                                        Editar
+                                    </a>
+                                    <form method="post" action="{% url 'eliminar_configuracion' config.id %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                onclick="return confirm('¿Eliminar esta configuración?')">
+                                            Eliminar
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No hay configuraciones registradas aún.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

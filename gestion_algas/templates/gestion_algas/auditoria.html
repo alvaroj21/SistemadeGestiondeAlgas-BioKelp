@@ -1,0 +1,253 @@
+{% extends 'gestion_algas/base.html' %}
+
+{% block title %}Auditoría de Accesos - BioKelp{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Auditoría de Accesos al Sistema</h2>
+        <p class="text-muted">Registro completo de actividad del sistema</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <div class="row">
+                    <div class="col-md-6">
+                        Registros de Acceso
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="badge bg-light text-dark">Total: {{ total_accesos }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filtros -->
+                <form method="get" class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label for="tipo" class="form-label">Tipo de Acceso</label>
+                        <select name="tipo" id="tipo" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="login_exitoso" {% if tipo_filtro == 'login_exitoso' %}selected{% endif %}>Login Exitoso</option>
+                            <option value="login_fallido" {% if tipo_filtro == 'login_fallido' %}selected{% endif %}>Login Fallido</option>
+                            <option value="logout" {% if tipo_filtro == 'logout' %}selected{% endif %}>Logout</option>
+                            <option value="acceso_denegado" {% if tipo_filtro == 'acceso_denegado' %}selected{% endif %}>Acceso Denegado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="usuario" class="form-label">Usuario</label>
+                        <input type="text" name="usuario" id="usuario" class="form-control" 
+                               value="{{ usuario_filtro }}" placeholder="Nombre de usuario">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="fecha_desde" class="form-label">Desde</label>
+                        <input type="date" name="fecha_desde" id="fecha_desde" class="form-control" 
+                               value="{{ fecha_desde }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="fecha_hasta" class="form-label">Hasta</label>
+                        <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" 
+                               value="{{ fecha_hasta }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                    </div>
+                </form>
+
+                <!-- Estadísticas rápidas -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ stats.login_exitoso }}</h3>
+                                <small>Logins Exitosos</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ stats.login_fallido }}</h3>
+                                <small>Logins Fallidos</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body text-center">
+                                <h3>{{ stats.acceso_denegado }}</h3>
+                                <small>Accesos Denegados</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ stats.logout }}</h3>
+                                <small>Logouts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de registros -->
+                {% if accesos %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Tipo</th>
+                                <th>IP Origen</th>
+                                <th>Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acceso in accesos %}
+                            <tr>
+                                <td>{{ acceso.fecha_acceso|date:"d/m/Y H:i:s" }}</td>
+                                <td>
+                                    {% if acceso.usuario %}
+                                        {{ acceso.usuario.get_full_name }}
+                                        <br><small class="text-muted">{{ acceso.usuario.username }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Anónimo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if acceso.tipo_acceso == 'login_exitoso' %}
+                                        <span class="badge bg-success">Login Exitoso</span>
+                                    {% elif acceso.tipo_acceso == 'login_fallido' %}
+                                        <span class="badge bg-danger">Login Fallido</span>
+                                    {% elif acceso.tipo_acceso == 'logout' %}
+                                        <span class="badge bg-info">Logout</span>
+                                    {% elif acceso.tipo_acceso == 'acceso_denegado' %}
+                                        <span class="badge bg-warning text-dark">Acceso Denegado</span>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ acceso.ip_origen }}</code></td>
+                                <td>
+                                    {% if acceso.detalles %}
+                                        <small>{{ acceso.detalles }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Navegación de auditoría">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Primera</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Anterior</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Siguiente</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}{% if usuario_filtro %}&usuario={{ usuario_filtro }}{% endif %}">Última</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="alert alert-info">
+                    No hay registros de acceso que coincidan con los filtros.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Documentación de Permisos -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                Matriz de Permisos por Rol
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Módulo</th>
+                                <th class="text-center">Admin</th>
+                                <th class="text-center">Trabajador</th>
+                                <th class="text-center">Socio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Dashboard</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Registro de Producción</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Reportes</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓ Completo</span></td>
+                                <td class="text-center"><span class="badge bg-warning text-dark">✓ Básico</span></td>
+                                <td class="text-center"><span class="badge bg-success">✓ Completo</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Usuarios</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Capacidad Productiva</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓ Lectura/Escritura</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Configuración Reportes</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓ Lectura/Escritura</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                                <td class="text-center"><span class="badge bg-warning text-dark">✓ Solo Lectura</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Auditoría</strong></td>
+                                <td class="text-center"><span class="badge bg-success">✓</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">✗</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
