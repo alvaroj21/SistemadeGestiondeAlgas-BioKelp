@@ -727,13 +727,18 @@ def tipos_alga(request):
     
     # Listar todos los tipos de alga
     lista_tipos = TipoAlga.objects.all().order_by('nombre')
-    
+
+    tipos_activos = lista_tipos.filter(activo=True).count()
+    total_registros = sum(tipo.registros.count() for tipo in lista_tipos)
+
     context = {
         'user': user,
         'form': form,
         'tipos_alga': lista_tipos,
+        'tipos_activos': tipos_activos,
+        'total_registros': total_registros,
     }
-    
+
     return render(request, 'gestion_algas/tipos_alga.html', context)
 
 

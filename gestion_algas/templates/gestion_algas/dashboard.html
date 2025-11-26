@@ -13,7 +13,7 @@
 <!-- Estadísticas -->
 <div class="row mb-4">
     <div class="col-md-4">
-        <div class="card text-white bg-primary">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Total Registros</h5>
                 <h2 class="card-text">{{ total_registros }}</h2>
@@ -21,7 +21,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card text-white bg-success">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Producción Semanal</h5>
                 <h2 class="card-text">{{ produccion_semanal|floatformat:2 }} kg</h2>
@@ -29,7 +29,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card text-white bg-info">
+        <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Mi Rol</h5>
                 <h4 class="card-text text-capitalize">{{ user.rol }}</h4>
@@ -43,19 +43,19 @@
     <div class="col-12">
         <div class="d-grid gap-2 d-md-flex justify-content-md-start">
             {% if user.rol == 'Administrador' or user.rol == 'Trabajador' %}
-            <a href="{% url 'registro_produccion' %}" class="btn btn-success me-md-2">
+            <a href="{% url 'registro_produccion' %}" class="btn me-md-2">
                 Nuevo Registro
             </a>
             {% endif %}
             
             {% if user.rol == 'Administrador' or user.rol == 'Socio' %}
-            <a href="{% url 'reportes' %}" class="btn btn-outline-primary">
+            <a href="{% url 'reportes' %}" class="btn">
                 Ver Reportes
             </a>
             {% endif %}
             
             {% if user.rol == 'Administrador' %}
-            <a href="{% url 'usuarios' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'usuarios' %}" class="btn">
                 Gestionar Usuarios
             </a>
             {% endif %}

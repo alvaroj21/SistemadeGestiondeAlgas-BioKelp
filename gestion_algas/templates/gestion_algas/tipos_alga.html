@@ -145,12 +145,12 @@
                                               style="display: inline;"
                                               onsubmit="return confirm('¿Estás seguro de eliminar {{ tipo.nombre }}?');">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-outline-danger" title="Eliminar">
+                                                <button type="submit" class="btn" title="Eliminar">
                                                 Borrar
                                             </button>
                                         </form>
                                         {% else %}
-                                        <button class="btn btn-outline-secondary" disabled title="No se puede eliminar (tiene registros)">
+                                            <button class="btn" disabled title="No se puede eliminar (tiene registros)">
                                             borrar
                                         </button>
                                         {% endif %}
@@ -188,12 +188,7 @@
         <div class="card border-primary">
             <div class="card-body text-center">
                 <h3 class="text-primary">
-                    {% with activos=0 %}
-                    {% for tipo in tipos_alga %}
-                        {% if tipo.activo %}{% with activos=activos|add:1 %}{% endwith %}{% endif %}
-                    {% endfor %}
-                    {{ activos }}
-                    {% endwith %}
+                    {{ tipos_activos }}
                 </h3>
                 <p class="mb-0">Tipos Activos</p>
             </div>
@@ -203,12 +198,7 @@
         <div class="card border-secondary">
             <div class="card-body text-center">
                 <h3 class="text-secondary">
-                    {% with total=0 %}
-                    {% for tipo in tipos_alga %}
-                        {% with total=total|add:tipo.registros.count %}{% endwith %}
-                    {% endfor %}
-                    {{ total }}
-                    {% endwith %}
+                    {{ total_registros }}
                 </h3>
                 <p class="mb-0">Total Registros</p>
             </div>

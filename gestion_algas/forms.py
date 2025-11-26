@@ -174,7 +174,27 @@ class TipoAlgaForm(forms.ModelForm):
 
 class CapacidadProductivaForm(forms.ModelForm):
     """Formulario para gestionar capacidad productiva"""
-    
+
+    mes = forms.CharField(widget=forms.TextInput(attrs={
+        'class': 'form-control',
+        'type': 'month',
+        'required': True
+    }))
+
+    def clean_mes(self):
+        mes = self.cleaned_data['mes']
+        import datetime
+        if isinstance(mes, str) and len(mes) == 7:
+            try:
+                mes = datetime.datetime.strptime(mes + '-01', '%Y-%m-%d').date()
+            except Exception:
+                raise forms.ValidationError('Formato de mes inválido. Usa AAAA-MM.')
+        elif isinstance(mes, datetime.date):
+            return mes
+        else:
+            raise forms.ValidationError('Formato de mes inválido.')
+        return mes
+
     class Meta:
         model = CapacidadProductiva
         fields = [
@@ -182,11 +202,6 @@ class CapacidadProductivaForm(forms.ModelForm):
             'volumen_producido', 'volumen_comprometido', 'observaciones'
         ]
         widgets = {
-            'mes': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'month',
-                'required': True
-            }),
             'capacidad_mensual_maxima': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': '0.00',

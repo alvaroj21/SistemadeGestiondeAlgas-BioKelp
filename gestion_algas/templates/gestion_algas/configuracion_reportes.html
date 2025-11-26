@@ -14,7 +14,7 @@
     {% if puede_editar %}
     <div class="col-md-5">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+                    <div class="card-header">
                 {% if editando %}
                     Editar Configuración
                 {% else %}
@@ -99,10 +99,10 @@
                     <div class="form-check mb-3">
                         {{ form.activo }}
                         <label class="form-check-label" for="{{ form.activo.id_for_label }}">
-                            {{ form.activo.label }}
+                                    <button type="submit" class="btn">
                         </label>
                     </div>
-                    
+                                    <a href="{% url 'configuracion_reportes' %}" class="btn">Cancelar</a>
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">
                             {% if editando %}Actualizar{% else %}Crear Configuración{% endif %}
@@ -118,7 +118,7 @@
     {% else %}
     <div class="col-md-12">
         <div class="alert alert-info">
-            <strong>Modo solo lectura:</strong> Solo los administradores pueden crear o modificar configuraciones de reportes.
+                        <div class="card-header">
         </div>
     </div>
     {% endif %}
@@ -139,28 +139,28 @@
                                 <th>Formato</th>
                                 <th>Unidad</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
+                                                {{ config.get_formato_preferido_display }}
                             </tr>
                         </thead>
                         <tbody>
                             {% for config in configuraciones %}
-                            <tr>
-                                <td>{{ config.empresa }}</td>
+                                                    Activo
+                                                    Inactivo
                                 <td>{{ config.pais }}</td>
                                 <td>
                                     <span class="badge bg-secondary">{{ config.get_formato_preferido_display }}</span>
-                                </td>
-                                <td>{{ config.get_unidad_medida_display }}</td>
+                                                <a href="{% url 'generar_reporte_personalizado' config.id %}" 
+                                                   class="btn btn-sm" title="Generar Reporte">
                                 <td>
                                     {% if config.activo %}
                                         <span class="badge bg-success">Activo</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Inactivo</span>
+                                                <a href="{% url 'editar_configuracion' config.id %}" 
+                                                   class="btn btn-sm">
                                     {% endif %}
                                 </td>
                                 <td>
                                     <a href="{% url 'generar_reporte_personalizado' config.id %}" 
-                                       class="btn btn-sm btn-info" title="Generar Reporte">
+                                                    <button type="submit" class="btn btn-sm" 
                                         Generar
                                     </a>
                                     {% if puede_editar %}

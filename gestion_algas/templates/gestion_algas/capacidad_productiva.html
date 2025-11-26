@@ -13,7 +13,7 @@
 <div class="row mt-4">
     <div class="col-md-5">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 {% if editando %}
                     Editar Capacidad
                 {% else %}
@@ -88,7 +88,7 @@
     
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header bg-info text-white">
+            <div class="card-header">
                 Capacidades Registradas
             </div>
             <div class="card-body">
@@ -112,19 +112,16 @@
                                 <td>{{ cap.capacidad_mensual_maxima|floatformat:2 }} kg</td>
                                 <td>{{ cap.volumen_producido|floatformat:2 }} kg</td>
                                 <td>
-                                    <span class="badge bg-{% if cap.disponibilidad_mensual > 0 %}success{% else %}danger{% endif %}">
-                                        {{ cap.disponibilidad_mensual|floatformat:2 }} kg
-                                    </span>
+                                    {{ cap.disponibilidad_mensual|floatformat:2 }} kg
                                 </td>
                                 <td>
-                                    <span class="badge bg-primary">{{ cap.porcentaje_utilizado }}%</span>
+                                    {{ cap.porcentaje_utilizado }}%
                                 </td>
                                 <td>
-                                    <a href="{% url 'editar_capacidad' cap.id %}" class="btn btn-sm btn-warning">Editar</a>
+                                    <a href="{% url 'editar_capacidad' cap.id %}" class="btn btn-sm">Editar</a>
                                     <form method="post" action="{% url 'eliminar_capacidad' cap.id %}" style="display:inline;">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger" 
-                                                onclick="return confirm('¿Eliminar esta capacidad?')">
+                                        <button type="submit" class="btn btn-sm" onclick="return confirm('¿Eliminar esta capacidad?')">
                                             Eliminar
                                         </button>
                                     </form>
