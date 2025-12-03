@@ -1,4 +1,6 @@
 {% extends 'gestion_algas/base.html' %}
+{% load static %}
+{% load custom_filters %}
 
 {% block title %}Reporte Personalizado - {{ configuracion.empresa }}{% endblock %}
 
@@ -44,17 +46,17 @@
         <div class="row text-center">
             <div class="col-md-3">
                 <h6 class="text-muted">Capacidad Mensual</h6>
-                <h3>{{ capacidad_actual.capacidad_mensual_maxima|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <h3>{{ capacidad_actual.capacidad_mensual_maxima|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
             <div class="col-md-3">
                 <h6 class="text-muted">Capacidad Anual</h6>
-                <h3>{{ capacidad_actual.capacidad_anual_maxima|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <h3>{{ capacidad_actual.capacidad_anual_maxima|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
             <div class="col-md-3">
                 <h6 class="text-muted">Volumen Producido</h6>
-                <h3 class="text-success">{{ capacidad_actual.volumen_producido|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <h3 class="text-success">{{ capacidad_actual.volumen_producido|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
             <div class="col-md-3">
@@ -75,12 +77,12 @@
         <div class="row text-center">
             <div class="col-md-4">
                 <h6 class="text-muted">Volumen Comprometido</h6>
-                <h3 class="text-warning">{{ capacidad_actual.volumen_comprometido|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <h3 class="text-warning">{{ capacidad_actual.volumen_comprometido|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
             <div class="col-md-4">
                 <h6 class="text-muted">Disponibilidad Mensual</h6>
-                <h3 class="text-success">{{ capacidad_actual.disponibilidad_mensual|floatformat:2|mul:factor_conversion|floatformat:2 }}</h3>
+                <h3 class="text-success">{{ capacidad_actual.disponibilidad_mensual|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
             <div class="col-md-4">
@@ -94,17 +96,16 @@
 
 {% if configuracion.mostrar_historial_produccion and produccion_historial %}
 <div class="card mb-4">
-    <div class="card-header bg-info text-white">
-        <h5 class="mb-0">Historial de Producción (Últimos {{ configuracion.periodo_historial_meses }} meses)</h5>
+    <div class="card-header">
+        <h5 class="mb-0">Historial de Producción</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-striped table-bordered">
-                <thead class="table-dark">
+                <thead>
                     <tr>
                         <th>Tipo de Alga</th>
-                        <th>Total Cosechado</th>
-                        <th>Total Volumen Procesado</th>
+                        <th>Total Cosechado ({{ configuracion.get_unidad_medida_display }})</th>
                         <th>Registros</th>
                     </tr>
                 </thead>
@@ -112,28 +113,57 @@
                     {% for item in produccion_historial %}
                     <tr>
                         <td><strong>{{ item.tipo_alga__nombre }}</strong></td>
-                        <td>{{ item.total_cosechado|floatformat:2|mul:factor_conversion|floatformat:2 }} {{ configuracion.get_unidad_medida_display }}</td>
-                        <td>
-                            {% if item.total_volumen %}
-                                {{ item.total_volumen|floatformat:2 }} litros
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
+                        <td>{{ item.total_cosechado|floatformat:2|multiply:factor_conversion|floatformat:2 }}</td>
                         <td>{{ item.total_registros }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
-                <tfoot class="table-light">
+            </table>
+        </div>
+        
+        {% if configuracion.mostrar_graficos and produccion_por_mes %}
+        <div class="mt-4">
+            <h6>Tendencia de Producción por Mes</h6>
+            <canvas id="chartProduccionMensual" height="80"></canvas>
+        </div>
+        
+        <div class="mt-4">
+            <h6>Distribución por Tipo de Alga</h6>
+            <canvas id="chartDistribucion" height="80"></canvas>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if configuracion.incluir_observaciones and registros_detallados %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Registros Detallados (Últimos 50)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
                     <tr>
-                        <th>TOTAL</th>
-                        <th>
-                            {% widthratio produccion_historial.0.total_cosechado 1 factor_conversion as total_convertido %}
-                            {{ total_convertido|floatformat:2 }} {{ configuracion.get_unidad_medida_display }}
-                        </th>
-                        <th colspan="2"></th>
+                        <th>Fecha</th>
+                        <th>Tipo de Alga</th>
+                        <th>Cantidad ({{ configuracion.get_unidad_medida_display }})</th>
+                        <th>Sector</th>
+                        <th>Observaciones</th>
                     </tr>
-                </tfoot>
+                </thead>
+                <tbody>
+                    {% for registro in registros_detallados %}
+                    <tr>
+                        <td>{{ registro.fecha_registro|date:"d/m/Y" }}</td>
+                        <td>{{ registro.tipo_alga.nombre }}</td>
+                        <td>{{ registro.cantidad_cosechada|floatformat:2|multiply:factor_conversion|floatformat:2 }}</td>
+                        <td>{{ registro.sector }}</td>
+                        <td><small>{{ registro.observaciones|default:"Sin observaciones" }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>
@@ -155,10 +185,49 @@
 {% endblock %}
 
 {% block scripts %}
+{% if configuracion.mostrar_graficos and produccion_por_mes %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/reportes_charts.js' %}"></script>
+<script>
+/* eslint-disable */
+// @ts-nocheck
+// Configuración de datos para los gráficos (generado por Django templates)
+const chartConfig = {
+    mostrarGraficos: {{ configuracion.mostrar_graficos|yesno:"true,false" }},
+    unidadMedida: '{{ configuracion.get_unidad_medida_display }}',
+    produccionMensual: [
+        {% for item in produccion_por_mes %}
+        {
+            mes: '{{ item.mes|date:"m/Y" }}',
+            total: {{ item.total|floatformat:2|multiply:factor_conversion }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ],
+    distribucion: [
+        {% for item in produccion_historial %}
+        {
+            nombre: '{{ item.tipo_alga__nombre }}',
+            total: {{ item.total_cosechado|floatformat:2|multiply:factor_conversion }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+};
+
+// Inicializar gráficos cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    initReportCharts(chartConfig);
+});
+/* eslint-enable */
+</script>
+{% endif %}
+
 <style>
 @media print {
     .btn, nav, .navbar {
         display: none !important;
+    }
+    canvas {
+        max-height: 300px;
     }
 }
 </style>

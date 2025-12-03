@@ -590,12 +590,17 @@ def eliminar_capacidad(request, capacidad_id):
     return redirect('capacidad_productiva')
 
 
-@permiso_lectura_escritura('configuracion_reportes', requiere_escritura=True)
+@permiso_lectura_escritura('configuracion_reportes', requiere_escritura=False)
 def configuracion_reportes(request):
     """Vista de gestión de configuraciones de reportes (admin edita, socio solo ve)"""
     user = Usuario.objects.get(id=request.session.get('user_id'))
     
+    # Solo admin puede crear/editar
     if request.method == 'POST':
+        if user.rol != 'Administrador':
+            messages.error(request, 'No tienes permisos para crear configuraciones')
+            return redirect('configuracion_reportes')
+        
         form = ConfiguracionReporteForm(request.POST)
         if form.is_valid():
             configuracion = form.save()
@@ -625,6 +630,9 @@ def editar_configuracion(request, config_id):
     """Editar configuración de reporte (solo admin)"""
     configuracion = get_object_or_404(ConfiguracionReporte, id=config_id)
     
+    # Obtener usuario desde la sesión (sistema de autenticación personalizado)
+    user = Usuario.objects.get(id=request.session.get('user_id'))
+    
     if request.method == 'POST':
         form = ConfiguracionReporteForm(request.POST, instance=configuracion)
         if form.is_valid():
@@ -634,7 +642,7 @@ def editar_configuracion(request, config_id):
     else:
         form = ConfiguracionReporteForm(instance=configuracion)
     
-    puede_editar = request.user.rol == 'admin' or request.user.is_superuser
+    puede_editar = user.rol == 'Administrador'
     
     context = {
         'form': form,
@@ -663,50 +671,209 @@ def generar_reporte_personalizado(request, config_id):
     """Generar reporte personalizado según configuración del cliente (admin y socio)"""
     configuracion = get_object_or_404(ConfiguracionReporte, id=config_id)
     
-    # Calcular período de historial
-    fecha_hasta = timezone.now()
-    fecha_desde = fecha_hasta - timedelta(days=30 * configuracion.periodo_historial_meses)
+    # Determinar período de tiempo
+    if configuracion.usar_fecha_personalizada and configuracion.fecha_desde and configuracion.fecha_hasta:
+        fecha_desde = timezone.make_aware(datetime.combine(configuracion.fecha_desde, datetime.min.time()))
+        fecha_hasta = timezone.make_aware(datetime.combine(configuracion.fecha_hasta, datetime.max.time()))
+    else:
+        fecha_hasta = timezone.now()
+        fecha_desde = fecha_hasta - timedelta(days=30 * configuracion.periodo_historial_meses)
     
-    # Obtener datos de producción
+    # Obtener datos de producción con filtros
     produccion_historial = None
+    produccion_por_mes = None
     if configuracion.mostrar_historial_produccion:
-        produccion_historial = RegistroProduccion.objects.filter(
+        query = RegistroProduccion.objects.filter(
             fecha_registro__gte=fecha_desde,
             fecha_registro__lte=fecha_hasta
-        ).values('tipo_alga__nombre').annotate(
+        )
+        
+        # Filtrar por tipos de alga si están especificados
+        tipos_seleccionados = configuracion.tipos_alga.all()
+        if tipos_seleccionados.exists():
+            query = query.filter(tipo_alga__in=tipos_seleccionados)
+        
+        # Filtrar por sectores si están especificados
+        if configuracion.sectores_especificos:
+            sectores = [s.strip() for s in configuracion.sectores_especificos.split(',')]
+            query = query.filter(sector__in=sectores)
+        
+        produccion_historial = query.values('tipo_alga__nombre').annotate(
             total_cosechado=Sum('cantidad_cosechada'),
             total_registros=Count('id')
         ).order_by('-total_cosechado')
+        
+        # Datos para gráficos - usando RawSQL para compatibilidad con MySQL sin timezone
+        from django.db.models import Value
+        from django.db.models.functions import Concat, Substr
+        
+        produccion_por_mes = query.annotate(
+            mes=Concat(
+                Substr('fecha_registro', 1, 7),  # YYYY-MM
+                Value('-01')  # Agregar día para crear fecha completa
+            )
+        ).values('mes').annotate(
+            total=Sum('cantidad_cosechada')
+        ).order_by('mes')
     
-    # Obtener capacidad productiva
-    capacidad_actual = None
-    if configuracion.mostrar_capacidad_instalada or configuracion.mostrar_disponibilidad:
-        capacidad_actual = CapacidadProductiva.objects.order_by('-mes').first()
-    
-    # Factor de conversión según unidad
+    # Factor de conversión según unidad (definir ANTES de usarlo)
     factor_conversion = 1
     if configuracion.unidad_medida == 'ton':
         factor_conversion = 0.001  # kg a toneladas
     elif configuracion.unidad_medida == 'lb':
         factor_conversion = 2.20462  # kg a libras
     
+    # Obtener capacidad productiva y convertir valores
+    capacidad_actual = None
+    capacidad_convertida = None
+    if configuracion.mostrar_capacidad_instalada or configuracion.mostrar_disponibilidad:
+        capacidad_actual = CapacidadProductiva.objects.order_by('-mes').first()
+        if capacidad_actual:
+            # Convertir valores según unidad de medida
+            capacidad_convertida = {
+                'capacidad_mensual_maxima': float(capacidad_actual.capacidad_mensual_maxima) * factor_conversion,
+                'capacidad_anual_maxima': float(capacidad_actual.capacidad_anual_maxima) * factor_conversion,
+                'volumen_producido': float(capacidad_actual.volumen_producido) * factor_conversion,
+                'volumen_comprometido': float(capacidad_actual.volumen_comprometido) * factor_conversion,
+                'disponibilidad_mensual': float(capacidad_actual.disponibilidad_mensual) * factor_conversion,
+                'porcentaje_utilizado': capacidad_actual.porcentaje_utilizado,
+                'porcentaje_disponible': capacidad_actual.porcentaje_disponible,
+            }
+    
+    # Obtener registros detallados si incluyen observaciones
+    registros_detallados = None
+    if configuracion.incluir_observaciones:
+        query_detalle = RegistroProduccion.objects.filter(
+            fecha_registro__gte=fecha_desde,
+            fecha_registro__lte=fecha_hasta
+        )
+        
+        tipos_seleccionados = configuracion.tipos_alga.all()
+        if tipos_seleccionados.exists():
+            query_detalle = query_detalle.filter(tipo_alga__in=tipos_seleccionados)
+        
+        if configuracion.sectores_especificos:
+            sectores = [s.strip() for s in configuracion.sectores_especificos.split(',')]
+            query_detalle = query_detalle.filter(sector__in=sectores)
+        
+        registros_detallados = query_detalle.select_related('tipo_alga', 'usuario').order_by('-fecha_registro')[:50]
+    
     context = {
         'configuracion': configuracion,
         'produccion_historial': produccion_historial,
+        'produccion_por_mes': produccion_por_mes,
         'capacidad_actual': capacidad_actual,
+        'capacidad_convertida': capacidad_convertida,
         'factor_conversion': factor_conversion,
         'fecha_desde': fecha_desde,
         'fecha_hasta': fecha_hasta,
         'fecha_generacion': timezone.now(),
+        'registros_detallados': registros_detallados,
     }
     
     # Renderizar según formato
     if configuracion.formato_preferido == 'pdf' or configuracion.formato_preferido == 'ambos':
-        # Por ahora solo HTML, PDF requiere WeasyPrint
-        return render(request, 'gestion_algas/reporte_personalizado.html', context)
+        # Generar PDF con xhtml2pdf (más compatible con Windows)
+        from django.template.loader import render_to_string
+        from django.http import HttpResponse
+        try:
+            from xhtml2pdf import pisa
+            
+            # Renderizar template PDF optimizado (sin gráficos para mejor compatibilidad)
+            html_string = render_to_string('gestion_algas/reporte_pdf.html', context, request=request)
+            
+            # Crear respuesta PDF
+            response = HttpResponse(content_type='application/pdf')
+            filename = 'reporte_{}_{}.pdf'.format(
+                configuracion.empresa.replace(' ', '_'),
+                timezone.now().strftime('%Y%m%d')
+            )
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            
+            # Convertir HTML a PDF
+            pisa_status = pisa.CreatePDF(html_string, dest=response)
+            
+            if pisa_status.err:
+                messages.warning(request, 'Error al generar PDF. Mostrando reporte en HTML.')
+                return render(request, 'gestion_algas/reporte_personalizado.html', context)
+            
+            return response
+            
+        except ImportError:
+            messages.warning(request, 'xhtml2pdf no está instalado. Mostrando reporte en HTML.')
+            messages.info(request, 'Para generar PDFs, instala: pip install xhtml2pdf')
+            return render(request, 'gestion_algas/reporte_personalizado.html', context)
+    
     elif configuracion.formato_preferido == 'excel':
-        # Por ahora solo HTML, Excel requiere openpyxl
-        return render(request, 'gestion_algas/reporte_personalizado.html', context)
+        # Generar Excel
+        try:
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment
+            from django.http import HttpResponse
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = 'Reporte de Producción'
+            
+            # Encabezado
+            ws.merge_cells('A1:E1')
+            header_cell = ws['A1']
+            header_cell.value = f'Reporte de Producción - {configuracion.empresa}'
+            header_cell.font = Font(size=16, bold=True)
+            header_cell.alignment = Alignment(horizontal='center')
+            
+            # Información general
+            row = 3
+            ws[f'A{row}'] = 'País:'
+            ws[f'B{row}'] = configuracion.pais
+            row += 1
+            ws[f'A{row}'] = 'Período:'
+            periodo_texto = '{} - {}'.format(
+                fecha_desde.strftime('%d/%m/%Y'),
+                fecha_hasta.strftime('%d/%m/%Y')
+            )
+            ws[f'B{row}'] = periodo_texto
+            row += 1
+            ws[f'A{row}'] = 'Fecha de Generación:'
+            ws[f'B{row}'] = timezone.now().strftime('%d/%m/%Y %H:%M')
+            row += 2
+            
+            # Tabla de producción
+            if produccion_historial:
+                headers = ['Tipo de Alga', f'Total Cosechado ({configuracion.get_unidad_medida_display()})', 'Total Registros']
+                for col, header in enumerate(headers, start=1):
+                    cell = ws.cell(row=row, column=col)
+                    cell.value = header
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+                
+                row += 1
+                for item in produccion_historial:
+                    ws.cell(row=row, column=1, value=item['tipo_alga__nombre'])
+                    ws.cell(row=row, column=2, value=float(item['total_cosechado']) * factor_conversion)
+                    ws.cell(row=row, column=3, value=item['total_registros'])
+                    row += 1
+            
+            # Ajustar anchos de columna
+            for col in range(1, 6):
+                ws.column_dimensions[chr(64 + col)].width = 20
+            
+            # Crear respuesta HTTP
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            filename = 'reporte_{}_{}.xlsx'.format(
+                configuracion.empresa,
+                timezone.now().strftime('%Y%m%d')
+            )
+            response['Content-Disposition'] = f'attachment; filename=\"{filename}\"'
+            wb.save(response)
+            return response
+            
+        except ImportError:
+            messages.warning(request, 'openpyxl no está instalado. Mostrando reporte en HTML.')
+            return render(request, 'gestion_algas/reporte_personalizado.html', context)
+    
     else:
         return render(request, 'gestion_algas/reporte_personalizado.html', context)
 

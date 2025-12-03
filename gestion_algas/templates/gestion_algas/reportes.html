@@ -24,7 +24,6 @@
                             <tr>
                                 <th>Tipo de Alga</th>
                                 <th>Total Cosechado (kg)</th>
-                                <th>Total Volumen (l)</th>
                                 <th>Registros</th>
                             </tr>
                         </thead>
@@ -33,12 +32,11 @@
                             <tr>
                                 <td>{{ reporte.nombre }}</td>
                                 <td>{{ reporte.total_cosechado|floatformat:2|default:"0.00" }}</td>
-                                <td>{{ reporte.total_volumen|floatformat:2|default:"0.00" }}</td>
                                 <td>{{ reporte.total_registros }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted">No hay datos disponibles</td>
+                                <td colspan="3" class="text-center text-muted">No hay datos disponibles</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -63,7 +61,6 @@
                             <tr>
                                 <th>Semana</th>
                                 <th>Total Cosechado (kg)</th>
-                                <th>Total Volumen (l)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -71,11 +68,10 @@
                             <tr>
                                 <td>Semana {{ semana.semana }}</td>
                                 <td>{{ semana.total_cosechado|floatformat:2|default:"0.00" }}</td>
-                                <td>{{ semana.total_volumen|floatformat:2|default:"0.00" }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3" class="text-center text-muted">No hay datos disponibles</td>
+                                <td colspan="2" class="text-center text-muted">No hay datos disponibles</td>
                             </tr>
                             {% endfor %}
                         </tbody>

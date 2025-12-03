@@ -326,6 +326,48 @@ class ConfiguracionReporte(models.Model):
         verbose_name='Período de Historial (meses)',
         help_text='Número de meses de historial a incluir'
     )
+    # Filtros personalizables
+    tipos_alga = models.ManyToManyField(
+        TipoAlga,
+        blank=True,
+        verbose_name='Tipos de Alga',
+        help_text='Selecciona tipos específicos (vacío = todos)'
+    )
+    sectores_especificos = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name='Sectores Específicos',
+        help_text='Sectores separados por comas (vacío = todos)'
+    )
+    usar_fecha_personalizada = models.BooleanField(
+        default=False,
+        verbose_name='Usar Rango de Fecha Personalizado',
+        help_text='Si está activo, ignora el período de historial'
+    )
+    fecha_desde = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name='Fecha Desde',
+        help_text='Fecha inicial del reporte personalizado'
+    )
+    fecha_hasta = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name='Fecha Hasta',
+        help_text='Fecha final del reporte personalizado'
+    )
+    # Opciones de visualización
+    mostrar_graficos = models.BooleanField(
+        default=True,
+        verbose_name='Mostrar Gráficos',
+        help_text='Incluir gráficos de tendencias y comparativas'
+    )
+    incluir_observaciones = models.BooleanField(
+        default=False,
+        verbose_name='Incluir Observaciones',
+        help_text='Mostrar observaciones de cada registro'
+    )
     activo = models.BooleanField(
         default=True,
         verbose_name='Configuración Activa'

@@ -97,9 +97,54 @@
                     </div>
                     
                     <div class="form-check mb-3">
+                        {{ form.mostrar_graficos }}
+                        <label class="form-check-label" for="{{ form.mostrar_graficos.id_for_label }}">
+                            {{ form.mostrar_graficos.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        {{ form.incluir_observaciones }}
+                        <label class="form-check-label" for="{{ form.incluir_observaciones.id_for_label }}">
+                            {{ form.incluir_observaciones.label }}
+                        </label>
+                    </div>
+                    
+                    <h6 class="text-muted mb-3 mt-4">Filtros de Datos</h6>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.tipos_alga.id_for_label }}" class="form-label">{{ form.tipos_alga.label }}</label>
+                        {{ form.tipos_alga }}
+                        <small class="form-text text-muted">Mantén presionado Ctrl para seleccionar varios. Vacío = todos los tipos.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.sectores_especificos.id_for_label }}" class="form-label">{{ form.sectores_especificos.label }}</label>
+                        {{ form.sectores_especificos }}
+                        <small class="form-text text-muted">Separa sectores con comas. Vacío = todos los sectores.</small>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        {{ form.usar_fecha_personalizada }}
+                        <label class="form-check-label" for="{{ form.usar_fecha_personalizada.id_for_label }}">
+                            {{ form.usar_fecha_personalizada.label }}
+                        </label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.fecha_desde.id_for_label }}" class="form-label">{{ form.fecha_desde.label }}</label>
+                        {{ form.fecha_desde }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.fecha_hasta.id_for_label }}" class="form-label">{{ form.fecha_hasta.label }}</label>
+                        {{ form.fecha_hasta }}
+                    </div>
+                    
+                    <div class="form-check mb-3">
                         {{ form.activo }}
                         <label class="form-check-label" for="{{ form.activo.id_for_label }}">
-                                    <button type="submit" class="btn">
+                            {{ form.activo.label }}
                         </label>
                     </div>
                                     <a href="{% url 'configuracion_reportes' %}" class="btn">Cancelar</a>
@@ -125,8 +170,8 @@
     
     <div class="{% if puede_editar %}col-md-7{% else %}col-md-12{% endif %}">
         <div class="card">
-            <div class="card-header bg-info text-white">
-                Configuraciones Registradas
+            <div class="card-header">
+                <h5 class="mb-0">Configuraciones Registradas</h5>
             </div>
             <div class="card-body">
                 {% if configuraciones %}
@@ -139,40 +184,38 @@
                                 <th>Formato</th>
                                 <th>Unidad</th>
                                 <th>Estado</th>
-                                                {{ config.get_formato_preferido_display }}
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for config in configuraciones %}
-                                                    Activo
-                                                    Inactivo
+                            <tr>
+                                <td>{{ config.empresa }}</td>
                                 <td>{{ config.pais }}</td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ config.get_formato_preferido_display }}</span>
-                                                <a href="{% url 'generar_reporte_personalizado' config.id %}" 
-                                                   class="btn btn-sm" title="Generar Reporte">
+                                <td>{{ config.get_formato_preferido_display }}</td>
+                                <td>{{ config.get_unidad_medida_display }}</td>
                                 <td>
                                     {% if config.activo %}
                                         <span class="badge bg-success">Activo</span>
-                                                <a href="{% url 'editar_configuracion' config.id %}" 
-                                                   class="btn btn-sm">
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <a href="{% url 'generar_reporte_personalizado' config.id %}" 
-                                                    <button type="submit" class="btn btn-sm" 
-                                        Generar
+                                       class="btn btn-sm btn-primary" title="Generar Reporte">
+                                        <i class="bi bi-file-earmark-pdf"></i> Generar
                                     </a>
                                     {% if puede_editar %}
                                     <a href="{% url 'editar_configuracion' config.id %}" 
                                        class="btn btn-sm btn-warning">
-                                        Editar
+                                        <i class="bi bi-pencil"></i> Editar
                                     </a>
                                     <form method="post" action="{% url 'eliminar_configuracion' config.id %}" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-sm btn-danger" 
                                                 onclick="return confirm('¿Eliminar esta configuración?')">
-                                            Eliminar
+                                            <i class="bi bi-trash"></i> Eliminar
                                         </button>
                                     </form>
                                     {% endif %}

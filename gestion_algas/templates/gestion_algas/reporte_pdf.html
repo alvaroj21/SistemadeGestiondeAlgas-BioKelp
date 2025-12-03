@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Producción - {{ configuracion.empresa }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24pt;
+            margin-bottom: 5px;
+        }
+        
+        .header h2 {
+            color: #3498db;
+            font-size: 18pt;
+            font-weight: normal;
+        }
+        
+        .info-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+            font-size: 9pt;
+        }
+        
+        .info-box strong {
+            color: #2c3e50;
+            display: inline-block;
+            width: 150px;
+        }
+        
+        .section {
+            margin: 25px 0;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .section-title.green {
+            background-color: #27ae60;
+        }
+        
+        .section-title.orange {
+            background-color: #e67e22;
+        }
+        
+        .metrics {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .metric-row {
+            display: table-row;
+        }
+        
+        .metric {
+            display: table-cell;
+            text-align: center;
+            padding: 15px;
+            border: 1px solid #bdc3c7;
+            background-color: #f8f9fa;
+        }
+        
+        .metric-label {
+            font-size: 9pt;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .metric-value {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value.success {
+            color: #27ae60;
+        }
+        
+        .metric-value.warning {
+            color: #f39c12;
+        }
+        
+        .metric-value.info {
+            color: #3498db;
+        }
+        
+        .metric-unit {
+            font-size: 9pt;
+            color: #95a5a6;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        table thead {
+            background-color: #34495e;
+            color: white;
+        }
+        
+        table th {
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        
+        table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 9pt;
+        }
+        
+        table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        table tbody tr:hover {
+            background-color: #e8f4f8;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+            font-size: 8pt;
+            color: #7f8c8d;
+        }
+        
+        .summary-box {
+            background-color: #e8f4f8;
+            border: 2px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .summary-item {
+            display: inline-block;
+            width: 48%;
+            margin: 5px 0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <!-- ENCABEZADO -->
+    <div class="header">
+        <h1>BioKelp</h1>
+        <h2>Reporte de Producción de Algas</h2>
+    </div>
+    
+    <!-- INFORMACIÓN DEL CLIENTE -->
+    <div class="info-box">
+        <p><strong>Cliente:</strong> {{ configuracion.empresa }} ({{ configuracion.pais }})</p>
+        <p><strong>Contacto:</strong> {{ configuracion.contacto|default:"N/A" }} | {{ configuracion.email }}</p>
+        <p><strong>Fecha Generación:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</p>
+        <p><strong>Período Analizado:</strong> {{ fecha_desde|date:"d/m/Y" }} - {{ fecha_hasta|date:"d/m/Y" }}</p>
+        <p><strong>Unidad de Medida:</strong> {{ configuracion.get_unidad_medida_display }}</p>
+    </div>
+    
+    {% if configuracion.mostrar_capacidad_instalada and capacidad_actual %}
+    <!-- CAPACIDAD INSTALADA -->
+    <div class="section">
+        <div class="section-title">Capacidad Instalada</div>
+        <div class="metrics">
+            <div class="metric-row">
+                <div class="metric">
+                    <div class="metric-label">Capacidad Mensual</div>
+                    <div class="metric-value">{{ capacidad_convertida.capacidad_mensual_maxima|floatformat:2 }}</div>
+                    <div class="metric-unit">{{ configuracion.get_unidad_medida_display }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Capacidad Anual</div>
+                    <div class="metric-value">{{ capacidad_convertida.capacidad_anual_maxima|floatformat:2 }}</div>
+                    <div class="metric-unit">{{ configuracion.get_unidad_medida_display }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Volumen Producido</div>
+                    <div class="metric-value success">{{ capacidad_convertida.volumen_producido|floatformat:2 }}</div>
+                    <div class="metric-unit">{{ configuracion.get_unidad_medida_display }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">% Utilización</div>
+                    <div class="metric-value info">{{ capacidad_convertida.porcentaje_utilizado|floatformat:1 }}%</div>
+                    <div class="metric-unit">del total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if configuracion.mostrar_disponibilidad and capacidad_actual %}
+    <!-- DISPONIBILIDAD -->
+    <div class="section">
+        <div class="section-title green">Disponibilidad de Producción</div>
+        <div class="metrics">
+            <div class="metric-row">
+                <div class="metric">
+                    <div class="metric-label">Vol. Comprometido</div>
+                    <div class="metric-value warning">{{ capacidad_convertida.volumen_comprometido|floatformat:2 }}</div>
+                    <div class="metric-unit">{{ configuracion.get_unidad_medida_display }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Disponible Mensual</div>
+                    <div class="metric-value success">{{ capacidad_convertida.disponibilidad_mensual|floatformat:2 }}</div>
+                    <div class="metric-unit">{{ configuracion.get_unidad_medida_display }}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">% Disponible</div>
+                    <div class="metric-value success">{{ capacidad_convertida.porcentaje_disponible|floatformat:1 }}%</div>
+                    <div class="metric-unit">del total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if configuracion.mostrar_historial_produccion and produccion_historial %}
+    <!-- HISTORIAL DE PRODUCCIÓN -->
+    <div class="section">
+        <div class="section-title orange">Producción por Tipo de Alga</div>
+        
+        {% load custom_filters %}
+        
+        <!-- Resumen Total -->
+        <div class="summary-box">
+            <p style="margin-bottom: 10px; font-weight: bold; font-size: 11pt;">Resumen del Período</p>
+            {% with total_produccion=0 total_registros=0 %}
+                {% for item in produccion_historial %}
+                    {% with total_produccion=total_produccion|add:item.total_cosechado %}
+                    {% with total_registros=total_registros|add:item.total_registros %}
+                    {% endwith %}
+                    {% endwith %}
+                {% endfor %}
+                <div class="summary-item">
+                    <strong>Total Producido:</strong> 
+                    <span class="highlight">{{ total_produccion|floatformat:2|multiply:factor_conversion|floatformat:2 }} {{ configuracion.get_unidad_medida_display }}</span>
+                </div>
+                <div class="summary-item">
+                    <strong>Total Registros:</strong> 
+                    <span class="highlight">{{ produccion_historial|length }} tipos de alga</span>
+                </div>
+            {% endwith %}
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 45%;">Tipo de Alga</th>
+                    <th style="width: 25%;" class="text-right">Cantidad Cosechada</th>
+                    <th style="width: 15%;" class="text-center">N° Registros</th>
+                    <th style="width: 10%;" class="text-center">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in produccion_historial %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td><strong>{{ item.tipo_alga__nombre }}</strong></td>
+                    <td class="text-right">
+                        {{ item.total_cosechado|floatformat:2|multiply:factor_conversion|floatformat:2 }} 
+                        {{ configuracion.get_unidad_medida_display }}
+                    </td>
+                    <td class="text-center">{{ item.total_registros }}</td>
+                    <td class="text-center">
+                        {% if item.total_cosechado > 1000 %}
+                            <span class="badge badge-success">Alto</span>
+                        {% elif item.total_cosechado > 500 %}
+                            <span class="badge badge-info">Medio</span>
+                        {% else %}
+                            <span class="badge badge-warning">Bajo</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if produccion_por_mes %}
+    <!-- PRODUCCIÓN MENSUAL -->
+    <div class="section">
+        <div class="section-title">Tendencia de Producción Mensual</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Mes</th>
+                    <th style="width: 40%;" class="text-right">Producción Total</th>
+                    <th style="width: 20%;" class="text-center">Variación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in produccion_por_mes %}
+                <tr>
+                    <td>{{ item.mes }}</td>
+                    <td class="text-right">
+                        {{ item.total|floatformat:2|multiply:factor_conversion|floatformat:2 }} 
+                        {{ configuracion.get_unidad_medida_display }}
+                    </td>
+                    <td class="text-center">
+                        {% if forloop.first %}
+                            <span class="badge badge-info">Base</span>
+                        {% else %}
+                            <span class="badge badge-success">↑</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    {% if configuracion.incluir_observaciones and registros_detallados %}
+    <!-- REGISTROS DETALLADOS -->
+    <div class="section" style="page-break-before: always;">
+        <div class="section-title">Registros Detallados (Últimos 50)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Fecha</th>
+                    <th style="width: 25%;">Tipo de Alga</th>
+                    <th style="width: 18%;" class="text-right">Cantidad</th>
+                    <th style="width: 15%;">Sector</th>
+                    <th style="width: 30%;">Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in registros_detallados %}
+                <tr>
+                    <td>{{ registro.fecha_registro|date:"d/m/Y" }}</td>
+                    <td>{{ registro.tipo_alga.nombre }}</td>
+                    <td class="text-right">
+                        {{ registro.cantidad_cosechada|floatformat:2|multiply:factor_conversion|floatformat:2 }}
+                        {{ configuracion.get_unidad_medida_display }}
+                    </td>
+                    <td>{{ registro.sector|truncatechars:15 }}</td>
+                    <td style="font-size: 8pt;">{{ registro.observaciones|default:"Sin observaciones"|truncatechars:40 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- PIE DE PÁGINA -->
+    <div class="footer">
+        <p>
+            <strong>BioKelp</strong> - Sistema de Gestión de Producción de Algas<br>
+            Reporte generado el {{ fecha_generacion|date:"d \d\e F \d\e Y" }} a las {{ fecha_generacion|date:"H:i" }} hrs.<br>
+            Documento confidencial - {{ configuracion.empresa }}
+        </p>
+    </div>
+</body>
+</html>

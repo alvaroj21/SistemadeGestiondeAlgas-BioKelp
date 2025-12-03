@@ -253,7 +253,9 @@ class ConfiguracionReporteForm(forms.ModelForm):
             'empresa', 'pais', 'contacto', 'email', 'unidad_medida',
             'formato_preferido', 'mostrar_capacidad_instalada', 
             'mostrar_disponibilidad', 'mostrar_historial_produccion',
-            'periodo_historial_meses', 'activo'
+            'periodo_historial_meses', 'tipos_alga', 'sectores_especificos',
+            'usar_fecha_personalizada', 'fecha_desde', 'fecha_hasta',
+            'mostrar_graficos', 'incluir_observaciones', 'activo'
         ]
         widgets = {
             'empresa': forms.TextInput(attrs={
@@ -296,6 +298,31 @@ class ConfiguracionReporteForm(forms.ModelForm):
                 'max': '24',
                 'value': '6'
             }),
+            'tipos_alga': forms.SelectMultiple(attrs={
+                'class': 'form-select',
+                'size': '5'
+            }),
+            'sectores_especificos': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Sector A, Sector B, Sector C'
+            }),
+            'usar_fecha_personalizada': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'fecha_desde': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_hasta': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'mostrar_graficos': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'incluir_observaciones': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
@@ -311,5 +338,12 @@ class ConfiguracionReporteForm(forms.ModelForm):
             'mostrar_disponibilidad': 'Mostrar Disponibilidad',
             'mostrar_historial_produccion': 'Mostrar Historial de Producción',
             'periodo_historial_meses': 'Período de Historial (meses)',
+            'tipos_alga': 'Tipos de Alga Específicos',
+            'sectores_especificos': 'Sectores Específicos',
+            'usar_fecha_personalizada': 'Usar Rango de Fecha Personalizado',
+            'fecha_desde': 'Fecha Desde',
+            'fecha_hasta': 'Fecha Hasta',
+            'mostrar_graficos': 'Mostrar Gráficos',
+            'incluir_observaciones': 'Incluir Observaciones',
             'activo': 'Configuración Activa'
         }
