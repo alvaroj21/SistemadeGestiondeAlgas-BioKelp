@@ -221,17 +221,17 @@
 
 <!-- Estadísticas Rápidas -->
 <div class="row mt-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card border-success">
             <div class="card-body text-center">
                 <h3 class="text-success">
-                    {{ tipos_alga|length }}
+                    {{ tipos_alga.paginator.count }}
                 </h3>
                 <p class="mb-0">Total Tipos</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card border-primary">
             <div class="card-body text-center">
                 <h3 class="text-primary">
@@ -241,27 +241,13 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="card border-secondary">
             <div class="card-body text-center">
                 <h3 class="text-secondary">
                     {{ total_registros }}
                 </h3>
                 <p class="mb-0">Total Registros</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card border-info">
-            <div class="card-body text-center">
-                <h3 class="text-info">
-                    {% if tipos_alga %}
-                    {{ tipos_alga.0.fecha_creacion|date:"d/m/Y" }}
-                    {% else %}
-                    -
-                    {% endif %}
-                </h3>
-                <p class="mb-0">Último Registro</p>
             </div>
         </div>
     </div>
