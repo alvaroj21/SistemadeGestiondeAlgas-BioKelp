@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Vistas de la aplicación de gestión de algas
 """
@@ -8,6 +9,7 @@ from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from django.core.paginator import Paginator
 from datetime import timedelta, datetime
 from functools import wraps
 from .models import Usuario, TipoAlga, RegistroProduccion, ControlAcceso, CapacidadProductiva, ConfiguracionReporte
@@ -19,7 +21,6 @@ from .forms import CustomLoginForm, UsuarioCreationForm, RegistroProduccionForm,
 # ============================================================================
 
 # Diccionario que define qué módulos puede acceder cada rol
-# Inspirado en el sistema de gestión eléctrica
 PERMISOS_ROL = {
     'Administrador': [
         'dashboard',
@@ -34,13 +35,8 @@ PERMISOS_ROL = {
     'Trabajador': [
         'dashboard',
         'registro_produccion',
-        'reportes_basicos',
-    ],
-    'Socio': [
-        'dashboard',
         'reportes',
-        'estadisticas_avanzadas',
-        'configuracion_reportes',  # Solo lectura
+        'reportes_basicos',
     ],
 }
 
@@ -229,7 +225,7 @@ def permiso_lectura_escritura(modulo, requiere_escritura=False):
     Uso:
         @permiso_lectura_escritura('reportes', requiere_escritura=False)
         def ver_reportes(request):
-            # Socio y Admin pueden ver
+            # Admin y Trabajadores pueden ver
             ...
         
         @permiso_lectura_escritura('reportes', requiere_escritura=True)
@@ -356,24 +352,115 @@ def dashboard(request):
     
     # Estadísticas según el rol
     if user.rol == 'Administrador':
-        total_registros = RegistroProduccion.objects.count()
+        # Registros del mes actual
+        inicio_mes = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        total_registros = RegistroProduccion.objects.filter(
+            fecha_registro__gte=inicio_mes
+        ).count()
+        
+        # Producción de la última semana
         produccion_semanal = RegistroProduccion.objects.filter(
             fecha_registro__gte=timezone.now() - timedelta(days=7)
+        ).aggregate(total=Sum('cantidad_cosechada'))['total'] or 0
+        
+        # Producción del mes actual
+        produccion_total = RegistroProduccion.objects.filter(
+            fecha_registro__gte=inicio_mes
         ).aggregate(total=Sum('cantidad_cosechada'))['total'] or 0
         
         ultimos_registros = RegistroProduccion.objects.select_related(
             'usuario', 'tipo_alga'
-        ).all()[:5]
+        ).order_by('-fecha_registro')[:10]
+        
+        # Producción por semana (últimas 4 semanas)
+        produccion_por_semana = []
+        etiquetas_semanas = []
+        for i in range(4):
+            inicio = timezone.now() - timedelta(weeks=i+1)
+            fin = timezone.now() - timedelta(weeks=i)
+            total_semana = RegistroProduccion.objects.filter(
+                fecha_registro__gte=inicio,
+                fecha_registro__lt=fin
+            ).aggregate(total=Sum('cantidad_cosechada'))['total'] or 0
+            produccion_por_semana.insert(0, round(float(total_semana), 2))
+            # Crear etiqueta con rango de fechas
+            etiqueta = f"{inicio.strftime('%d/%m')} - {fin.strftime('%d/%m')}"
+            etiquetas_semanas.insert(0, etiqueta)
+        
+        # Producción por tipo de alga (todas las algas con producción)
+        produccion_por_tipo = TipoAlga.objects.annotate(
+            total=Sum('registros__cantidad_cosechada')
+        ).filter(total__gt=0).order_by('-total')
+        
+        # Capacidad total (usar la capacidad mensual más reciente o un valor por defecto)
+        capacidad_reciente = CapacidadProductiva.objects.order_by('-mes').first()
+        if capacidad_reciente:
+            capacidad_total = capacidad_reciente.capacidad_mensual_maxima
+        else:
+            capacidad_total = 2400  # Valor por defecto
+        
+        # Calcular porcentaje de capacidad utilizada
+        if capacidad_total > 0:
+            porcentaje_capacidad = round((float(produccion_total) / float(capacidad_total)) * 100, 1)
+        else:
+            porcentaje_capacidad = 0
+            
     else:
-        total_registros = RegistroProduccion.objects.filter(usuario=user).count()
+        # Trabajador - Ver todos los datos de producción agregados (estadísticas generales)
+        # pero solo sus propios registros individuales
+        inicio_mes = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Registros totales del mes (de todos, no solo suyos)
+        total_registros = RegistroProduccion.objects.filter(
+            fecha_registro__gte=inicio_mes
+        ).count()
+        
+        # Producción semanal total (de todos)
         produccion_semanal = RegistroProduccion.objects.filter(
-            usuario=user,
             fecha_registro__gte=timezone.now() - timedelta(days=7)
         ).aggregate(total=Sum('cantidad_cosechada'))['total'] or 0
         
+        # Producción del mes actual total (de todos)
+        produccion_total = RegistroProduccion.objects.filter(
+            fecha_registro__gte=inicio_mes
+        ).aggregate(total=Sum('cantidad_cosechada'))['total'] or 0
+        
+        # Últimos registros solo del trabajador
         ultimos_registros = RegistroProduccion.objects.filter(
             usuario=user
-        ).select_related('tipo_alga')[:5]
+        ).select_related('tipo_alga').order_by('-fecha_registro')[:10]
+        
+        # Producción por semana (últimas 4 semanas) - de todos
+        produccion_por_semana = []
+        etiquetas_semanas = []
+        for i in range(4):
+            inicio = timezone.now() - timedelta(weeks=i+1)
+            fin = timezone.now() - timedelta(weeks=i)
+            total_semana = RegistroProduccion.objects.filter(
+                fecha_registro__gte=inicio,
+                fecha_registro__lt=fin
+            ).aggregate(total=Sum('cantidad_cosechada'))['total'] or 0
+            produccion_por_semana.insert(0, round(float(total_semana), 2))
+            # Crear etiqueta con rango de fechas
+            etiqueta = f"{inicio.strftime('%d/%m')} - {fin.strftime('%d/%m')}"
+            etiquetas_semanas.insert(0, etiqueta)
+        
+        # Producción por tipo de alga (todas las algas con producción, de todos)
+        produccion_por_tipo = TipoAlga.objects.annotate(
+            total=Sum('registros__cantidad_cosechada')
+        ).filter(total__gt=0).order_by('-total')
+        
+        # Capacidad (usar la capacidad mensual más reciente o un valor por defecto)
+        capacidad_reciente = CapacidadProductiva.objects.order_by('-mes').first()
+        if capacidad_reciente:
+            capacidad_total = capacidad_reciente.capacidad_mensual_maxima
+        else:
+            capacidad_total = 2400  # Valor por defecto
+        
+        if capacidad_total > 0:
+            porcentaje_capacidad = round((float(produccion_total) / float(capacidad_total)) * 100, 1)
+        else:
+            porcentaje_capacidad = 0
     
     # Obtener permisos del usuario
     permisos = obtener_permisos_usuario(user)
@@ -381,11 +468,17 @@ def dashboard(request):
     context = {
         'total_registros': total_registros,
         'produccion_semanal': produccion_semanal,
+        'produccion_total': produccion_total,
         'ultimos_registros': ultimos_registros,
         'user': user,  # Pasar objeto completo
         'username': user.username,
         'rol': user.rol,
         'permisos': permisos,
+        'produccion_por_semana': produccion_por_semana,
+        'etiquetas_semanas': etiquetas_semanas,
+        'produccion_por_tipo': produccion_por_tipo,
+        'capacidad_total': capacidad_total,
+        'porcentaje_capacidad': porcentaje_capacidad,
     }
     
     return render(request, 'gestion_algas/dashboard.html', context)
@@ -401,6 +494,7 @@ def registro_produccion(request):
         if form.is_valid():
             registro = form.save(commit=False)
             registro.usuario = user
+            registro.nombre_usuario = user.username
             registro.save()
             messages.success(request, 'Registro de producción guardado exitosamente!')
             return redirect('dashboard')
@@ -419,8 +513,11 @@ def registro_produccion(request):
 
 @requiere_permiso('reportes', 'reportes_basicos')
 def reportes(request):
-    """Vista de reportes y estadísticas (Admin, Socio, Trabajador)"""
+    """Vista de reportes y estadísticas (Admin y Trabajador)"""
     user = Usuario.objects.get(id=request.session.get('user_id'))
+    
+    # Búsqueda
+    busqueda = request.GET.get('busqueda', '')
     
     # Producción por tipo de alga
     reporte_tipos = TipoAlga.objects.annotate(
@@ -428,15 +525,51 @@ def reportes(request):
         total_registros=Count('registros')
     ).filter(total_cosechado__isnull=False)
     
-    # Producción por semana (últimas 8 semanas)
+    if busqueda:
+        reporte_tipos = reporte_tipos.filter(nombre__icontains=busqueda)
+    
+    # Producción por semana (últimas 8 semanas) con fechas de inicio y fin
     hace_8_semanas = timezone.now() - timedelta(weeks=8)
-    reporte_semanas = RegistroProduccion.objects.filter(
+    registros = RegistroProduccion.objects.filter(
         fecha_registro__gte=hace_8_semanas
-    ).extra(
-        select={'semana': "DATE_FORMAT(fecha_registro, '%%Y-%%U')"}
-    ).values('semana').annotate(
-        total_cosechado=Sum('cantidad_cosechada')
-    ).order_by('-semana')
+    ).order_by('-fecha_registro')
+    
+    # Agrupar por semanas de 7 días
+    semanas_dict = {}
+    for registro in registros:
+        # Calcular el inicio de la semana (lunes)
+        dias_desde_lunes = registro.fecha_registro.weekday()
+        inicio_semana = (registro.fecha_registro - timedelta(days=dias_desde_lunes)).date()
+        fin_semana = inicio_semana + timedelta(days=6)
+        
+        semana_key = inicio_semana.strftime('%Y-%m-%d')
+        
+        if semana_key not in semanas_dict:
+            semanas_dict[semana_key] = {
+                'inicio': inicio_semana,
+                'fin': fin_semana,
+                'total_cosechado': 0,
+                'registros_count': 0
+            }
+        
+        semanas_dict[semana_key]['total_cosechado'] += float(registro.cantidad_cosechada)
+        semanas_dict[semana_key]['registros_count'] += 1
+    
+    # Convertir a lista ordenada
+    reporte_semanas = [
+        {
+            'inicio': data['inicio'],
+            'fin': data['fin'],
+            'total_cosechado': data['total_cosechado'],
+            'registros_count': data['registros_count']
+        }
+        for semana_key, data in sorted(semanas_dict.items(), reverse=True)
+    ]
+    
+    # Paginacion para semanas
+    paginator = Paginator(reporte_semanas, 5)
+    page_number = request.GET.get('page')
+    semanas_page = paginator.get_page(page_number)
     
     # Obtener permisos del usuario para mostrar/ocultar secciones
     permisos_usuario = obtener_permisos_usuario(user)
@@ -444,11 +577,102 @@ def reportes(request):
     context = {
         'user': user,
         'reporte_tipos': reporte_tipos,
-        'reporte_semanas': reporte_semanas,
+        'reporte_semanas': semanas_page,
         'permisos_usuario': permisos_usuario,
+        'busqueda': busqueda,
     }
     
     return render(request, 'gestion_algas/reportes.html', context)
+
+
+@requiere_permiso('reportes')
+def generar_pdf_semanal(request):
+    """Genera PDF de producción semanal"""
+    from django.template.loader import render_to_string
+    from django.http import HttpResponse
+    from datetime import datetime
+    
+    # Obtener parámetros de la semana
+    inicio_str = request.GET.get('inicio')
+    fin_str = request.GET.get('fin')
+    
+    if not inicio_str or not fin_str:
+        messages.error(request, 'Parámetros de fecha inválidos')
+        return redirect('reportes')
+    
+    try:
+        inicio = datetime.strptime(inicio_str, '%Y-%m-%d').date()
+        fin = datetime.strptime(fin_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, 'Formato de fecha inválido')
+        return redirect('reportes')
+    
+    # Convertir a datetime para las consultas
+    from django.utils import timezone as tz
+    inicio_dt = tz.make_aware(datetime.combine(inicio, datetime.min.time()))
+    fin_dt = tz.make_aware(datetime.combine(fin, datetime.max.time()))
+    
+    # Obtener todos los registros de la semana
+    registros = RegistroProduccion.objects.filter(
+        fecha_registro__gte=inicio_dt,
+        fecha_registro__lte=fin_dt
+    ).select_related('tipo_alga', 'usuario').order_by('fecha_registro')
+    
+    # Agrupar por tipo de alga
+    produccion_por_tipo = {}
+    total_general = 0
+    
+    for registro in registros:
+        tipo = registro.tipo_alga.nombre
+        if tipo not in produccion_por_tipo:
+            produccion_por_tipo[tipo] = {
+                'cantidad': 0,
+                'registros': []
+            }
+        produccion_por_tipo[tipo]['cantidad'] += float(registro.cantidad_cosechada)
+        produccion_por_tipo[tipo]['registros'].append(registro)
+        total_general += float(registro.cantidad_cosechada)
+    
+    context = {
+        'inicio': inicio,
+        'fin': fin,
+        'produccion_por_tipo': produccion_por_tipo,
+        'total_general': total_general,
+        'registros': registros,
+        'fecha_generacion': timezone.now(),
+    }
+    
+    try:
+        from xhtml2pdf import pisa
+        from io import BytesIO
+        
+        # Renderizar template
+        html_string = render_to_string('gestion_algas/pdf_semanal.html', context, request=request)
+        
+        # Crear respuesta PDF
+        response = HttpResponse(content_type='application/pdf')
+        filename = f'produccion_semanal_{inicio.strftime("%Y%m%d")}_{fin.strftime("%Y%m%d")}.pdf'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Generar PDF con encoding UTF-8 usando BytesIO
+        pisa_status = pisa.CreatePDF(
+            BytesIO(html_string.encode('utf-8')),
+            dest=response,
+            encoding='utf-8'
+        )
+        
+        if pisa_status.err:
+            messages.error(request, 'Error al generar el PDF')
+            return redirect('reportes')
+        
+        return response
+    except ImportError:
+        messages.error(request, 'xhtml2pdf no está instalado. Ejecuta: pip install xhtml2pdf')
+        return redirect('reportes')
+    except Exception as e:
+        messages.error(request, f'Error al generar PDF: {str(e)}')
+        return redirect('reportes')
+
 
 
 @solo_admin
@@ -465,13 +689,29 @@ def usuarios(request):
     else:
         form = UsuarioCreationForm()
     
-    # Solo mostrar usuarios del sistema (con rol asignado)
-    lista_usuarios = Usuario.objects.all().order_by('username')
+    # Búsqueda
+    busqueda = request.GET.get('busqueda', '')
+    lista_usuarios = Usuario.objects.all()
+    
+    if busqueda:
+        lista_usuarios = lista_usuarios.filter(
+            Q(username__icontains=busqueda) |
+            Q(email__icontains=busqueda) |
+            Q(rol__icontains=busqueda)
+        )
+    
+    lista_usuarios = lista_usuarios.order_by('username')
+    
+    # Paginación
+    paginator = Paginator(lista_usuarios, 5)
+    page_number = request.GET.get('page')
+    usuarios_page = paginator.get_page(page_number)
     
     context = {
         'user': user,
         'form': form,
-        'usuarios': lista_usuarios,
+        'usuarios': usuarios_page,
+        'busqueda': busqueda,
     }
     
     return render(request, 'gestion_algas/usuarios.html', context)
@@ -488,18 +728,9 @@ def eliminar_usuario(request, usuario_id):
             messages.error(request, 'No puedes eliminar tu propio usuario')
             return redirect('usuarios')
         
-        # No permitir eliminar superusuarios de Django Admin
-        if usuario.is_superuser or usuario.rol is None:
-            messages.error(request, 'No puedes eliminar superusuarios de Django Admin')
-            return redirect('usuarios')
-        
-        # Verificar si tiene registros de producción
-        if usuario.registros_produccion.exists():
-            messages.warning(request, 'No se puede eliminar el usuario porque tiene registros de producción asociados')
-        else:
-            nombre = usuario.get_full_name()
-            usuario.delete()
-            messages.success(request, f'Usuario {nombre} eliminado correctamente')
+        nombre = usuario.username
+        usuario.delete()
+        messages.success(request, f'Usuario {nombre} eliminado correctamente')
     
     return redirect('usuarios')
 
@@ -592,7 +823,7 @@ def eliminar_capacidad(request, capacidad_id):
 
 @permiso_lectura_escritura('configuracion_reportes', requiere_escritura=False)
 def configuracion_reportes(request):
-    """Vista de gestión de configuraciones de reportes (admin edita, socio solo ve)"""
+    """Vista de gestión de configuraciones de reportes (solo admin puede crear/editar)"""
     user = Usuario.objects.get(id=request.session.get('user_id'))
     
     # Solo admin puede crear/editar
@@ -609,8 +840,24 @@ def configuracion_reportes(request):
     else:
         form = ConfiguracionReporteForm()
     
-    # Listar configuraciones existentes
-    configuraciones = ConfiguracionReporte.objects.all().order_by('-fecha_creacion')
+    # Búsqueda
+    busqueda = request.GET.get('busqueda', '')
+    configuraciones = ConfiguracionReporte.objects.all()
+    
+    if busqueda:
+        configuraciones = configuraciones.filter(
+            Q(empresa__icontains=busqueda) |
+            Q(pais__icontains=busqueda) |
+            Q(contacto__icontains=busqueda) |
+            Q(email__icontains=busqueda)
+        )
+    
+    configuraciones = configuraciones.order_by('-fecha_creacion')
+    
+    # Paginación
+    paginator = Paginator(configuraciones, 5)
+    page_number = request.GET.get('page')
+    configuraciones_page = paginator.get_page(page_number)
     
     # Verificar si el usuario puede editar
     puede_editar = user.rol == 'Administrador'
@@ -618,8 +865,9 @@ def configuracion_reportes(request):
     context = {
         'user': user,
         'form': form,
-        'configuraciones': configuraciones,
+        'configuraciones': configuraciones_page,
         'puede_editar': puede_editar,
+        'busqueda': busqueda,
     }
     
     return render(request, 'gestion_algas/configuracion_reportes.html', context)
@@ -668,7 +916,7 @@ def eliminar_configuracion(request, config_id):
 
 @requiere_permiso('reportes', 'configuracion_reportes')
 def generar_reporte_personalizado(request, config_id):
-    """Generar reporte personalizado según configuración del cliente (admin y socio)"""
+    """Generar reporte personalizado según configuración del cliente (solo admin)"""
     configuracion = get_object_or_404(ConfiguracionReporte, id=config_id)
     
     # Determinar período de tiempo
@@ -732,9 +980,7 @@ def generar_reporte_personalizado(request, config_id):
             # Convertir valores según unidad de medida
             capacidad_convertida = {
                 'capacidad_mensual_maxima': float(capacidad_actual.capacidad_mensual_maxima) * factor_conversion,
-                'capacidad_anual_maxima': float(capacidad_actual.capacidad_anual_maxima) * factor_conversion,
                 'volumen_producido': float(capacidad_actual.volumen_producido) * factor_conversion,
-                'volumen_comprometido': float(capacidad_actual.volumen_comprometido) * factor_conversion,
                 'disponibilidad_mensual': float(capacidad_actual.disponibilidad_mensual) * factor_conversion,
                 'porcentaje_utilizado': capacidad_actual.porcentaje_utilizado,
                 'porcentaje_disponible': capacidad_actual.porcentaje_disponible,
@@ -778,6 +1024,7 @@ def generar_reporte_personalizado(request, config_id):
         from django.http import HttpResponse
         try:
             from xhtml2pdf import pisa
+            from io import BytesIO
             
             # Renderizar template PDF optimizado (sin gráficos para mejor compatibilidad)
             html_string = render_to_string('gestion_algas/reporte_pdf.html', context, request=request)
@@ -790,8 +1037,12 @@ def generar_reporte_personalizado(request, config_id):
             )
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             
-            # Convertir HTML a PDF
-            pisa_status = pisa.CreatePDF(html_string, dest=response)
+            # Convertir HTML a PDF con encoding UTF-8 usando BytesIO
+            pisa_status = pisa.CreatePDF(
+                BytesIO(html_string.encode('utf-8')),
+                dest=response,
+                encoding='utf-8'
+            )
             
             if pisa_status.err:
                 messages.warning(request, 'Error al generar PDF. Mostrando reporte en HTML.')
@@ -892,18 +1143,33 @@ def tipos_alga(request):
     else:
         form = TipoAlgaForm()
     
-    # Listar todos los tipos de alga
-    lista_tipos = TipoAlga.objects.all().order_by('nombre')
-
+    # Búsqueda
+    busqueda = request.GET.get('busqueda', '')
+    lista_tipos = TipoAlga.objects.all()
+    
+    if busqueda:
+        lista_tipos = lista_tipos.filter(
+            Q(nombre__icontains=busqueda) |
+            Q(descripcion__icontains=busqueda)
+        )
+    
+    lista_tipos = lista_tipos.order_by('nombre')
+    
     tipos_activos = lista_tipos.filter(activo=True).count()
     total_registros = sum(tipo.registros.count() for tipo in lista_tipos)
+    
+    # Paginación
+    paginator = Paginator(lista_tipos, 5)
+    page_number = request.GET.get('page')
+    tipos_page = paginator.get_page(page_number)
 
     context = {
         'user': user,
         'form': form,
-        'tipos_alga': lista_tipos,
+        'tipos_alga': tipos_page,
         'tipos_activos': tipos_activos,
         'total_registros': total_registros,
+        'busqueda': busqueda,
     }
 
     return render(request, 'gestion_algas/tipos_alga.html', context)
@@ -941,13 +1207,15 @@ def eliminar_tipo_alga(request, tipo_id):
     if request.method == 'POST':
         tipo_alga = get_object_or_404(TipoAlga, id=tipo_id)
         
-        # Verificar si tiene registros de producción
-        if tipo_alga.registros.exists():
-            messages.warning(request, f'No se puede eliminar "{tipo_alga.nombre}" porque tiene registros de producción asociados. Puedes desactivarlo en su lugar.')
-        else:
-            nombre = tipo_alga.nombre
-            tipo_alga.delete()
-            messages.success(request, f'Tipo de alga "{nombre}" eliminado correctamente')
+        # Guardar el nombre del tipo de alga en todos los registros antes de eliminar
+        for registro in tipo_alga.registros.all():
+            if not registro.nombre_tipo_alga:
+                registro.nombre_tipo_alga = tipo_alga.nombre
+                registro.save(update_fields=['nombre_tipo_alga'])
+        
+        nombre = tipo_alga.nombre
+        tipo_alga.delete()
+        messages.success(request, f'Tipo de alga "{nombre}" eliminado correctamente')
     
     return redirect('tipos_alga')
 
@@ -964,4 +1232,57 @@ def toggle_tipo_alga(request, tipo_id):
         messages.success(request, f'Tipo de alga "{tipo_alga.nombre}" {estado} correctamente')
     
     return redirect('tipos_alga')
+
+
+# ============================================================================
+# VISTA DE PERFIL/CONFIGURACIÓN DE USUARIO
+# ============================================================================
+
+@requiere_permiso('dashboard')
+def perfil_usuario(request):
+    """Vista para mostrar y editar el perfil del usuario logueado"""
+    user = Usuario.objects.get(id=request.session.get('user_id'))
+    
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        nuevo_email = request.POST.get('email', '').strip()
+        nuevo_telefono = request.POST.get('telefono', '').strip()
+        nueva_password = request.POST.get('password', '').strip()
+        confirmar_password = request.POST.get('confirmar_password', '').strip()
+        
+        # Actualizar email
+        if nuevo_email:
+            user.email = nuevo_email
+            
+        # Actualizar teléfono
+        if nuevo_telefono:
+            user.telefono = nuevo_telefono
+            
+        # Actualizar contraseña si se proporcionó
+        if nueva_password:
+            if nueva_password != confirmar_password:
+                messages.error(request, 'Las contraseñas no coinciden')
+            elif len(nueva_password) < 6:
+                messages.error(request, 'La contraseña debe tener al menos 6 caracteres')
+            else:
+                user.set_password(nueva_password)
+                messages.success(request, 'Contraseña actualizada exitosamente')
+        
+        try:
+            user.save()
+            if nuevo_email or nuevo_telefono:
+                messages.success(request, 'Perfil actualizado exitosamente')
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el perfil: {str(e)}')
+        
+        return redirect('perfil_usuario')
+    
+    context = {
+        'user': user,
+        'usuario': user,
+        'username': user.username,
+        'rol': user.rol,
+    }
+    
+    return render(request, 'gestion_algas/perfil_usuario.html', context)
 

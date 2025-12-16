@@ -40,26 +40,21 @@
 {% if configuracion.mostrar_capacidad_instalada and capacidad_actual %}
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">Capacidad Instalada</h5>
+        <h5 class="mb-0 text-white">Capacidad Instalada</h5>
     </div>
     <div class="card-body">
         <div class="row text-center">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <h6 class="text-muted">Capacidad Mensual</h6>
                 <h3>{{ capacidad_actual.capacidad_mensual_maxima|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
-            <div class="col-md-3">
-                <h6 class="text-muted">Capacidad Anual</h6>
-                <h3>{{ capacidad_actual.capacidad_anual_maxima|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
-                <p>{{ configuracion.get_unidad_medida_display }}</p>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <h6 class="text-muted">Volumen Producido</h6>
                 <h3 class="text-success">{{ capacidad_actual.volumen_producido|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <h6 class="text-muted">% Utilizado</h6>
                 <h3 class="text-info">{{ capacidad_actual.porcentaje_utilizado }}%</h3>
             </div>
@@ -75,17 +70,12 @@
     </div>
     <div class="card-body">
         <div class="row text-center">
-            <div class="col-md-4">
-                <h6 class="text-muted">Volumen Comprometido</h6>
-                <h3 class="text-warning">{{ capacidad_actual.volumen_comprometido|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
-                <p>{{ configuracion.get_unidad_medida_display }}</p>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <h6 class="text-muted">Disponibilidad Mensual</h6>
                 <h3 class="text-success">{{ capacidad_actual.disponibilidad_mensual|floatformat:2|multiply:factor_conversion|floatformat:2 }}</h3>
                 <p>{{ configuracion.get_unidad_medida_display }}</p>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <h6 class="text-muted">% Disponible</h6>
                 <h3 class="text-success">{{ capacidad_actual.porcentaje_disponible }}%</h3>
             </div>

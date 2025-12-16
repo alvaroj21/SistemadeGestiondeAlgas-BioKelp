@@ -3,62 +3,53 @@
 {% block title %}Dashboard - Sistema Algas{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2>Dashboard Principal</h2>
-        <p class="text-muted">Resumen de actividades del sistema</p>
+<div class="dashboard-header mb-4">
+    <div>
+        <h2 class="dashboard-title mb-1">Dashboard</h2>
+        <p class="text-muted mb-0">Bienvenido, {{ user.username }}</p>
     </div>
 </div>
 
-<!-- Estadísticas -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Total Registros</h5>
-                <h2 class="card-text">{{ total_registros }}</h2>
-            </div>
+<!-- Estadísticas Principales -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="stats-card stats-card-blue">
+            <div class="stats-label">Producción Total</div>
+            <div class="stats-value">{{ produccion_total|floatformat:0|default:"0" }} kg</div>
+            <div class="stats-subtitle">Última semana: {{ produccion_semanal|floatformat:0 }} kg</div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Producción Semanal</h5>
-                <h2 class="card-text">{{ produccion_semanal|floatformat:2 }} kg</h2>
-            </div>
+    <div class="col-12 col-md-4">
+        <div class="stats-card stats-card-green">
+            <div class="stats-label">Capacidad Utilizada</div>
+            <div class="stats-value">{{ porcentaje_capacidad|floatformat:0|default:"0" }}%</div>
+            <div class="stats-subtitle">{{ produccion_total|floatformat:0 }} / {{ capacidad_total|floatformat:0 }} kg</div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Mi Rol</h5>
-                <h4 class="card-text text-capitalize">{{ user.rol }}</h4>
-            </div>
+    <div class="col-12 col-md-4">
+        <div class="stats-card stats-card-purple">
+            <div class="stats-label">Registros Activos</div>
+            <div class="stats-value">{{ total_registros|default:"0" }}</div>
+            <div class="stats-subtitle">Este mes</div>
         </div>
     </div>
 </div>
 
-<!-- Acciones Rápidas -->
-<div class="row mb-4">
+<!-- Gráficos -->
+<div class="row g-4 mb-4">
     <div class="col-12">
-        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-            {% if user.rol == 'Administrador' or user.rol == 'Trabajador' %}
-            <a href="{% url 'registro_produccion' %}" class="btn me-md-2">
-                Nuevo Registro
-            </a>
-            {% endif %}
-            
-            {% if user.rol == 'Administrador' or user.rol == 'Socio' %}
-            <a href="{% url 'reportes' %}" class="btn">
-                Ver Reportes
-            </a>
-            {% endif %}
-            
-            {% if user.rol == 'Administrador' %}
-            <a href="{% url 'usuarios' %}" class="btn">
-                Gestionar Usuarios
-            </a>
-            {% endif %}
+        <div class="chart-card">
+            <h5 class="chart-title">Producción Semanal</h5>
+            <canvas id="weeklyChart" height="80"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <h5 class="chart-title">Por Tipo de Alga</h5>
+            <canvas id="algaeTypeChart" height="80"></canvas>
         </div>
     </div>
 </div>
@@ -66,14 +57,20 @@
 <!-- Últimos Registros -->
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Últimos Registros de Producción</h5>
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5 class="table-card-title">
+                    {% if user.rol == 'Administrador' %}
+                    Últimos Registros de Producción
+                    {% else %}
+                    Mis Últimos Registros de Producción
+                    {% endif %}
+                </h5>
             </div>
-            <div class="card-body">
+            <div class="table-card-body">
                 {% if ultimos_registros %}
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="modern-table">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
@@ -92,8 +89,10 @@
                                 {% if user.rol == 'Administrador' %}
                                 <td>{{ registro.usuario.username }}</td>
                                 {% endif %}
-                                <td>{{ registro.tipo_alga.nombre }}</td>
-                                <td>{{ registro.cantidad_cosechada|floatformat:2 }}</td>
+                                <td>
+                                    <span class="badge-alga">{{ registro.tipo_alga.nombre }}</span>
+                                </td>
+                                <td><strong>{{ registro.cantidad_cosechada|floatformat:2 }}</strong></td>
                                 <td>{{ registro.sector }}</td>
                             </tr>
                             {% endfor %}
@@ -101,10 +100,120 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted text-center">No hay registros de producción aún.</p>
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="32" r="32" fill="#F3F4F6"/>
+                        <path d="M32 20V44M20 32H44" stroke="#9CA3AF" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                    <p class="empty-state-text">No hay registros de producción aún</p>
+                    <a href="{% url 'registro_produccion' %}" class="btn btn-sm btn-dashboard-primary">Crear primer registro</a>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Weekly Production Chart
+const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+new Chart(weeklyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ etiquetas_semanas|safe }},
+        datasets: [{
+            label: 'Volumen (kg)',
+            data: {{ produccion_por_semana|safe }},
+            borderColor: '#4A6FFF',
+            backgroundColor: 'rgba(74, 111, 255, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#4A6FFF'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Producción: ' + context.parsed.y.toFixed(2) + ' kg';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: '#F3F4F6' },
+                ticks: {
+                    callback: function(value) {
+                        return value + ' kg';
+                    }
+                }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+});
+
+// Algae Type Chart
+const algaeCtx = document.getElementById('algaeTypeChart').getContext('2d');
+// Generar colores dinámicamente para todas las algas
+const colorPalette = [
+    '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9', '#3B82F6',
+    '#6366F1', '#8B5CF6', '#A855F7', '#D946EF', '#EC4899',
+    '#F43F5E', '#EF4444', '#F97316', '#F59E0B', '#EAB308'
+];
+const algaeColors = {{ produccion_por_tipo|length }} > colorPalette.length 
+    ? Array.from({length: {{ produccion_por_tipo|length }}}, (_, i) => 
+        `hsl(${(i * 360 / {{ produccion_por_tipo|length }})}, 70%, 60%)`)
+    : colorPalette.slice(0, {{ produccion_por_tipo|length }});
+
+new Chart(algaeCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for tipo in produccion_por_tipo %}'{{ tipo.nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for tipo in produccion_por_tipo %}{{ tipo.total|floatformat:0|default:"0" }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: algaeColors,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Producción: ' + context.parsed.y + ' kg';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: '#F3F4F6' },
+                ticks: {
+                    callback: function(value) {
+                        return value + ' kg';
+                    }
+                }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+});
+</script>
 {% endblock %}

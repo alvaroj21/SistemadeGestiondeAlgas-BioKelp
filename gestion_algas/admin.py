@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Configuración del panel de administración de Django
 """
@@ -87,7 +88,6 @@ class ControlAccesoAdmin(admin.ModelAdmin):
     list_display = ['fecha_acceso', 'usuario', 'tipo_acceso', 'ip_origen']
     list_filter = ['tipo_acceso', 'fecha_acceso']
     search_fields = ['usuario__username', 'ip_origen', 'detalles']
-    date_hierarchy = 'fecha_acceso'
     ordering = ['-fecha_acceso']
     
     readonly_fields = ['usuario', 'ip_origen', 'tipo_acceso', 'fecha_acceso', 'detalles']
@@ -104,7 +104,7 @@ class ControlAccesoAdmin(admin.ModelAdmin):
 @admin.register(CapacidadProductiva)
 class CapacidadProductivaAdmin(admin.ModelAdmin):
     """Administración de capacidad productiva"""
-    list_display = ['mes', 'capacidad_mensual_maxima', 'volumen_producido', 'volumen_comprometido', 'disponibilidad_mensual', 'porcentaje_utilizado']
+    list_display = ['mes', 'capacidad_mensual_maxima', 'volumen_producido', 'disponibilidad_mensual', 'porcentaje_utilizado']
     list_filter = ['mes']
     search_fields = ['observaciones']
     ordering = ['-mes']
@@ -114,10 +114,7 @@ class CapacidadProductivaAdmin(admin.ModelAdmin):
             'fields': ('mes',)
         }),
         ('Capacidad', {
-            'fields': ('capacidad_mensual_maxima', 'capacidad_anual_maxima')
-        }),
-        ('Producción', {
-            'fields': ('volumen_producido', 'volumen_comprometido', 'observaciones')
+            'fields': ('capacidad_mensual_maxima', 'observaciones')
         }),
         ('Metadata', {
             'fields': ('fecha_creacion', 'fecha_modificacion'),

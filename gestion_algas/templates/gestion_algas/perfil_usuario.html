@@ -1,0 +1,81 @@
+{% extends 'gestion_algas/base.html' %}
+
+{% block title %}Mi Perfil - BioKelp{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div style="font-size: 4rem; color: #2D4AC8; margin-bottom: 1rem;">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+                        <path d="M20 19C20 15.134 16.4183 12 12 12C7.58172 12 4 15.134 4 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h4>{{ usuario.username }}</h4>
+                <span class="badge bg-primary">{{ usuario.rol }}</span>
+                <p class="text-muted mt-2">{{ usuario.email|default:"Email no configurado" }}</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 text-white">Actualizar Información</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ usuario.email|default:'' }}" 
+                                   placeholder="ejemplo@correo.com">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" 
+                                   value="{{ usuario.telefono|default:'' }}" 
+                                   placeholder="+56 9 1234 5678">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="username_display" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="username_display" 
+                               value="{{ usuario.username }}" disabled>
+                        <small class="text-muted">El nombre de usuario no se puede cambiar</small>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mb-3">Cambiar Contraseña</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Nueva Contraseña</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Deja en blanco para mantener">
+                            <small class="text-muted">Mínimo 6 caracteres</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirmar_password" class="form-label">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" id="confirmar_password" 
+                                   name="confirmar_password" placeholder="Confirma la contraseña">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                            Volver
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

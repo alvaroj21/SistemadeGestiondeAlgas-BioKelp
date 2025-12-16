@@ -15,7 +15,7 @@
     <div class="col-lg-5">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0">Crear Nuevo Usuario</h5>
+                <h5 class="card-title mb-0 text-white">Crear Nuevo Usuario</h5>
             </div>
             <div class="card-body">
                 <form method="POST">
@@ -82,19 +82,32 @@
     <div class="col-lg-7">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Usuarios Registrados ({{ usuarios|length }})</h5>
+                <h5 class="card-title mb-0">Usuarios Registrados ({{ usuarios.paginator.count }})</h5>
             </div>
             <div class="card-body">
+                <!-- Buscador -->
+                <form method="GET" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               name="busqueda" 
+                               placeholder="Buscar por nombre, email o rol..." 
+                               value="{{ busqueda }}">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                        {% if busqueda %}
+                        <a href="{% url 'usuarios' %}" class="btn btn-secondary">Limpiar</a>
+                        {% endif %}
+                    </div>
+                </form>
+                
                 {% if usuarios %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Nombre</th>
                                 <th>Usuario</th>
                                 <th>Email</th>
                                 <th>Rol</th>
-                                <th>Fecha</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -102,32 +115,28 @@
                             {% for usuario in usuarios %}
                             <tr>
                                 <td>{{ usuario.username }}</td>
-                                <td>{{ usuario.username }}</td>
                                 <td>{{ usuario.email }}</td>
                                 <td>
                                     {% if usuario.rol == 'Administrador' %}
                                         <span class="badge bg-danger">Administrador</span>
                                     {% elif usuario.rol == 'Trabajador' %}
                                         <span class="badge bg-primary">Trabajador</span>
-                                    {% elif usuario.rol == 'Socio' %}
-                                        <span class="badge bg-info">Socio</span>
                                     {% else %}
                                         <span class="badge bg-secondary">{{ usuario.rol }}</span>
                                     {% endif %}
                                 </td>
-                                <td>-</td>
                                 <td>
                                     {% if usuario.id != user.id %}
                                     <form method="POST" action="{% url 'eliminar_usuario' usuario.id %}" 
                                           style="display: inline;"
                                           onsubmit="return confirm('¿Estás seguro de eliminar a {{ usuario.username }}?');">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            🗑️ Eliminar
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar usuario">
+                                            Eliminar
                                         </button>
                                     </form>
                                     {% else %}
-                                    <span class="badge bg-secondary">Tú</span>
+                                    <span class="badge bg-info">Usuario Actual</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -135,45 +144,53 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Paginación -->
+                {% if usuarios.has_other_pages %}
+                <nav aria-label="Paginación de usuarios">
+                    <ul class="pagination justify-content-center mt-3">
+                        {% if usuarios.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ usuarios.previous_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Anterior</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Anterior</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in usuarios.paginator.page_range %}
+                        <li class="page-item {% if usuarios.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if usuarios.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ usuarios.next_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Siguiente</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Siguiente</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
                 {% else %}
-                <p class="text-muted text-center py-4">No hay usuarios registrados aún.</p>
+                <div class="alert alert-info text-center">
+                    <h5>No se encontraron usuarios</h5>
+                    {% if busqueda %}
+                    <p class="mb-0">No hay resultados para "{{ busqueda }}".</p>
+                    {% else %}
+                    <p class="mb-0">No hay usuarios registrados aún.</p>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Estadísticas Rápidas -->
-<div class="row mt-4">
-    <div class="col-md-4">
-        <div class="card border-danger">
-            <div class="card-body text-center">
-                <h3 class="text-danger">
-                    {{ usuarios|length }}
-                </h3>
-                <p class="mb-0">Total Usuarios</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-primary">
-            <div class="card-body text-center">
-                <h3 class="text-primary">
-                    {% with usuarios|length as total %}{{ total }}{% endwith %}
-                </h3>
-                <p class="mb-0">Usuarios Activos</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-info">
-            <div class="card-body text-center">
-                <h3 class="text-info">
-                    -
-                </h3>
-                <p class="mb-0">Último Registro</p>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

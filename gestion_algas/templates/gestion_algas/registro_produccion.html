@@ -6,8 +6,8 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header">
-                <h4 class="card-title mb-0">Registro de Producción Diaria</h4>
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0 text-white">Registro de Producción Diaria</h4>
             </div>
             <div class="card-body">
                 <form method="POST">
@@ -15,7 +15,29 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form.tipo_alga.label_tag }}
-                            {{ form.tipo_alga }}
+                            <div class="select-searchable-wrapper">
+                                <div class="custom-select-container">
+                                    <input type="text" 
+                                           id="alga-search" 
+                                           class="form-control custom-select-input" 
+                                           placeholder="Seleccionar tipo de alga..."
+                                           autocomplete="off"
+                                           readonly>
+                                    <div class="custom-select-dropdown" id="alga-dropdown">
+                                        <input type="text" 
+                                               id="alga-filter" 
+                                               class="form-control mb-2" 
+                                               placeholder="Buscar..."
+                                               autocomplete="off">
+                                        <div class="custom-select-options" id="alga-options"></div>
+                                    </div>
+                                </div>
+                                <select style="display: none;" id="id_tipo_alga" name="tipo_alga" required>
+                                    {% for choice in form.tipo_alga.field.choices %}
+                                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                             {% if form.tipo_alga.errors %}
                                 <div class="text-danger">{{ form.tipo_alga.errors }}</div>
                             {% endif %}
@@ -59,4 +81,175 @@
         </div>
     </div>
 </div>
+
+<style>
+.select-searchable-wrapper {
+    position: relative;
+}
+
+.custom-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-input {
+    cursor: pointer;
+    background-color: white;
+}
+
+.custom-select-input:focus {
+    border-color: #4A6FFF;
+    box-shadow: 0 0 0 0.2rem rgba(74, 111, 255, 0.25);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    margin-top: 4px;
+    padding: 8px;
+    display: none;
+}
+
+.custom-select-dropdown.show {
+    display: block;
+}
+
+.custom-select-options {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.custom-select-option {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.custom-select-option:hover {
+    background-color: #f8f9fa;
+}
+
+.custom-select-option.selected {
+    background-color: #4A6FFF;
+    color: white;
+}
+
+.custom-select-option.hidden {
+    display: none;
+}
+
+#alga-filter:focus {
+    border-color: #4A6FFF;
+    box-shadow: 0 0 0 0.2rem rgba(74, 111, 255, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('alga-search');
+    const dropdown = document.getElementById('alga-dropdown');
+    const filterInput = document.getElementById('alga-filter');
+    const optionsContainer = document.getElementById('alga-options');
+    const selectElement = document.getElementById('id_tipo_alga');
+    
+    if (!searchInput || !dropdown || !selectElement) return;
+    
+    let options = [];
+    
+    // Cargar opciones del select oculto
+    function loadOptions() {
+        options = [];
+        optionsContainer.innerHTML = '';
+        
+        for (let i = 0; i < selectElement.options.length; i++) {
+            const option = selectElement.options[i];
+            if (!option.value) continue; // Saltar opción vacía
+            
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-select-option';
+            optionDiv.textContent = option.text;
+            optionDiv.dataset.value = option.value;
+            
+            optionDiv.addEventListener('click', function() {
+                selectOption(option.value, option.text);
+            });
+            
+            optionsContainer.appendChild(optionDiv);
+            options.push({ element: optionDiv, text: option.text, value: option.value });
+        }
+    }
+    
+    // Seleccionar una opción
+    function selectOption(value, text) {
+        selectElement.value = value;
+        searchInput.value = text;
+        dropdown.classList.remove('show');
+        filterInput.value = '';
+        filterOptions('');
+        
+        // Marcar como seleccionada
+        options.forEach(opt => {
+            if (opt.value === value) {
+                opt.element.classList.add('selected');
+            } else {
+                opt.element.classList.remove('selected');
+            }
+        });
+    }
+    
+    // Filtrar opciones
+    function filterOptions(searchTerm) {
+        const term = searchTerm.toLowerCase();
+        options.forEach(opt => {
+            if (opt.text.toLowerCase().includes(term)) {
+                opt.element.classList.remove('hidden');
+            } else {
+                opt.element.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Mostrar dropdown al hacer click en el input
+    searchInput.addEventListener('click', function() {
+        dropdown.classList.add('show');
+        setTimeout(() => filterInput.focus(), 100);
+    });
+    
+    // Filtrar mientras se escribe
+    filterInput.addEventListener('input', function() {
+        filterOptions(this.value);
+    });
+    
+    // Cerrar dropdown al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Inicializar
+    loadOptions();
+    
+    // Si hay un valor pre-seleccionado, mostrarlo
+    if (selectElement.value) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            searchInput.value = selectedOption.text;
+            options.forEach(opt => {
+                if (opt.value === selectedOption.value) {
+                    opt.element.classList.add('selected');
+                }
+            });
+        }
+    }
+});
+</script>
 {% endblock %}

@@ -1,11 +1,11 @@
 {% extends 'gestion_algas/base.html' %}
 
-{% block title %}Configuración de Reportes - BioKelp{% endblock %}
+{% block title %}Reportes - BioKelp{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <h2>Configuración de Reportes Personalizados</h2>
+        <h2>Reportes Personalizados</h2>
         <p class="text-muted">Gestiona configuraciones de reportes para clientes internacionales</p>
     </div>
 </div>
@@ -14,12 +14,14 @@
     {% if puede_editar %}
     <div class="col-md-5">
         <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-primary text-white">
+                <h5 class="mb-0 text-white">
                 {% if editando %}
                     Editar Configuración
                 {% else %}
                     Nueva Configuración
                 {% endif %}
+                </h5>
             </div>
             <div class="card-body">
                 <form method="post">
@@ -97,13 +99,6 @@
                     </div>
                     
                     <div class="form-check mb-3">
-                        {{ form.mostrar_graficos }}
-                        <label class="form-check-label" for="{{ form.mostrar_graficos.id_for_label }}">
-                            {{ form.mostrar_graficos.label }}
-                        </label>
-                    </div>
-                    
-                    <div class="form-check mb-3">
                         {{ form.incluir_observaciones }}
                         <label class="form-check-label" for="{{ form.incluir_observaciones.id_for_label }}">
                             {{ form.incluir_observaciones.label }}
@@ -141,13 +136,6 @@
                         {{ form.fecha_hasta }}
                     </div>
                     
-                    <div class="form-check mb-3">
-                        {{ form.activo }}
-                        <label class="form-check-label" for="{{ form.activo.id_for_label }}">
-                            {{ form.activo.label }}
-                        </label>
-                    </div>
-                                    <a href="{% url 'configuracion_reportes' %}" class="btn">Cancelar</a>
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">
                             {% if editando %}Actualizar{% else %}Crear Configuración{% endif %}
@@ -171,9 +159,24 @@
     <div class="{% if puede_editar %}col-md-7{% else %}col-md-12{% endif %}">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">Configuraciones Registradas</h5>
+                <h5 class="mb-0">Reportes Personalizados</h5>
             </div>
             <div class="card-body">
+                <!-- Buscador -->
+                <form method="GET" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               name="busqueda" 
+                               placeholder="Buscar por empresa, país, contacto o email..." 
+                               value="{{ busqueda }}">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                        {% if busqueda %}
+                        <a href="{% url 'configuracion_reportes' %}" class="btn btn-secondary">Limpiar</a>
+                        {% endif %}
+                    </div>
+                </form>
+                
                 {% if configuraciones %}
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -183,7 +186,6 @@
                                 <th>País</th>
                                 <th>Formato</th>
                                 <th>Unidad</th>
-                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -195,27 +197,20 @@
                                 <td>{{ config.get_formato_preferido_display }}</td>
                                 <td>{{ config.get_unidad_medida_display }}</td>
                                 <td>
-                                    {% if config.activo %}
-                                        <span class="badge bg-success">Activo</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Inactivo</span>
-                                    {% endif %}
-                                </td>
-                                <td>
                                     <a href="{% url 'generar_reporte_personalizado' config.id %}" 
                                        class="btn btn-sm btn-primary" title="Generar Reporte">
-                                        <i class="bi bi-file-earmark-pdf"></i> Generar
+                                        Generar PDF
                                     </a>
                                     {% if puede_editar %}
                                     <a href="{% url 'editar_configuracion' config.id %}" 
                                        class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i> Editar
+                                        Editar
                                     </a>
                                     <form method="post" action="{% url 'eliminar_configuracion' config.id %}" style="display:inline;">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-sm btn-danger" 
                                                 onclick="return confirm('¿Eliminar esta configuración?')">
-                                            <i class="bi bi-trash"></i> Eliminar
+                                            Eliminar
                                         </button>
                                     </form>
                                     {% endif %}
@@ -225,8 +220,49 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Paginación -->
+                {% if configuraciones.has_other_pages %}
+                <nav aria-label="Paginación de configuraciones">
+                    <ul class="pagination justify-content-center mt-3">
+                        {% if configuraciones.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ configuraciones.previous_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Anterior</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Anterior</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in configuraciones.paginator.page_range %}
+                        <li class="page-item {% if configuraciones.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if configuraciones.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ configuraciones.next_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Siguiente</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Siguiente</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
                 {% else %}
-                <p class="text-muted">No hay configuraciones registradas aún.</p>
+                <div class="alert alert-info text-center">
+                    <h5>No se encontraron configuraciones</h5>
+                    {% if busqueda %}
+                    <p class="mb-0">No hay resultados para "{{ busqueda }}".</p>
+                    {% else %}
+                    <p class="mb-0">No hay configuraciones registradas aún.</p>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
         </div>

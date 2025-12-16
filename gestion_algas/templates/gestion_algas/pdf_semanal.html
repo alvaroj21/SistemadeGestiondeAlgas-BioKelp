@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Semanal de Producción</title>
+    <style>
+        @charset "UTF-8";
+        @page {
+            size: letter;
+            margin: 2cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #333;
+        }
+        
+        .header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 20pt;
+            margin-bottom: 5px;
+        }
+        
+        .header h2 {
+            color: #3498db;
+            font-size: 14pt;
+            font-weight: normal;
+        }
+        
+        .info-box {
+            background-color: #ecf0f1;
+            padding: 12px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .info-box p {
+            margin: 4px 0;
+            font-size: 9pt;
+        }
+        
+        .info-box strong {
+            color: #2c3e50;
+            display: inline-block;
+            width: 130px;
+        }
+        
+        .section {
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 12px;
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        
+        .summary-box {
+            background-color: #e8f4f8;
+            border: 2px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .summary-box h3 {
+            color: #2c3e50;
+            font-size: 11pt;
+            margin-bottom: 8px;
+        }
+        
+        .summary-box .total {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 10px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+        
+        table thead {
+            background-color: #34495e;
+            color: white;
+        }
+        
+        table th {
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+        
+        table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 8pt;
+        }
+        
+        table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .tipo-alga-section {
+            margin: 15px 0;
+            border: 1px solid #bdc3c7;
+            padding: 10px;
+        }
+        
+        .tipo-alga-header {
+            background-color: #27ae60;
+            color: white;
+            padding: 6px 10px;
+            font-size: 10pt;
+            font-weight: bold;
+            margin: -10px -10px 10px -10px;
+        }
+        
+        .footer {
+            margin-top: 25px;
+            padding-top: 12px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+            font-size: 8pt;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>BioKelp</h1>
+        <h2>Reporte Semanal de Producción</h2>
+    </div>
+
+    <!-- Información del Período -->
+    <div class="info-box">
+        <p><strong>Período:</strong> {{ inicio|date:"d/m/Y" }} - {{ fin|date:"d/m/Y" }}</p>
+        <p><strong>Fecha de Generación:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</p>
+        <p><strong>Total de Registros:</strong> {{ registros|length }}</p>
+    </div>
+
+    <!-- Resumen Total -->
+    <div class="summary-box">
+        <h3>TOTAL COSECHADO EN LA SEMANA</h3>
+        <div class="total">{{ total_general|floatformat:2 }} kg</div>
+    </div>
+
+    <!-- Producción por Tipo de Alga -->
+    <div class="section">
+        <div class="section-title">Producción por Tipo de Alga</div>
+        
+        {% for tipo, datos in produccion_por_tipo.items %}
+        <div class="tipo-alga-section">
+            <div class="tipo-alga-header">
+                {{ tipo }} - Total: {{ datos.cantidad|floatformat:2 }} kg
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Sector</th>
+                        <th>Cantidad (kg)</th>
+                        <th>Responsable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in datos.registros %}
+                    <tr>
+                        <td>{{ registro.fecha_registro|date:"d/m/Y H:i" }}</td>
+                        <td>{{ registro.sector }}</td>
+                        <td class="text-right">{{ registro.cantidad_cosechada|floatformat:2 }}</td>
+                        <td>
+                            {% if registro.nombre_usuario %}
+                                {{ registro.nombre_usuario }}
+                            {% elif registro.usuario %}
+                                {{ registro.usuario.username }}
+                            {% else %}
+                                Usuario no disponible
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% empty %}
+        <p class="text-center" style="padding: 20px; color: #7f8c8d;">No hay registros de producción en este período</p>
+        {% endfor %}
+    </div>
+
+    <!-- Resumen por Tipo -->
+    {% if produccion_por_tipo %}
+    <div class="section">
+        <div class="section-title">Resumen por Tipo de Alga</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo de Alga</th>
+                    <th class="text-right">Cantidad (kg)</th>
+                    <th class="text-center">N° Registros</th>
+                    <th class="text-right">% del Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tipo, datos in produccion_por_tipo.items %}
+                <tr>
+                    <td>{{ tipo }}</td>
+                    <td class="text-right">{{ datos.cantidad|floatformat:2 }}</td>
+                    <td class="text-center">{{ datos.registros|length }}</td>
+                    <td class="text-right">{% widthratio datos.cantidad total_general 100 %}%</td>
+                </tr>
+                {% endfor %}
+                <tr style="background-color: #3498db; color: white; font-weight: bold;">
+                    <td>TOTAL</td>
+                    <td class="text-right">{{ total_general|floatformat:2 }}</td>
+                    <td class="text-center">{{ registros|length }}</td>
+                    <td class="text-right">100%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>BioKelp - Sistema de Gestión de Algas</p>
+        <p>Reporte generado automáticamente el {{ fecha_generacion|date:"d/m/Y" }} a las {{ fecha_generacion|date:"H:i" }}</p>
+    </div>
+</body>
+</html>

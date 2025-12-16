@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Formularios para la aplicación de gestión de algas
 """
@@ -111,8 +112,9 @@ class RegistroProduccionForm(forms.ModelForm):
         fields = ['tipo_alga', 'cantidad_cosechada', 'sector', 'observaciones']
         widgets = {
             'tipo_alga': forms.Select(attrs={
-                'class': 'form-select',
-                'required': True
+                'class': 'form-select searchable-select',
+                'required': True,
+                'id': 'id_tipo_alga'
             }),
             'cantidad_cosechada': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -197,36 +199,14 @@ class CapacidadProductivaForm(forms.ModelForm):
 
     class Meta:
         model = CapacidadProductiva
-        fields = [
-            'mes', 'capacidad_mensual_maxima', 'capacidad_anual_maxima',
-            'volumen_producido', 'volumen_comprometido', 'observaciones'
-        ]
+        fields = ['mes', 'capacidad_mensual_maxima', 'observaciones']
         widgets = {
             'capacidad_mensual_maxima': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': '0.00',
                 'step': '0.01',
-                'min': '0.00',
+                'min': '0.01',
                 'required': True
-            }),
-            'capacidad_anual_maxima': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0.00',
-                'required': True
-            }),
-            'volumen_producido': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0.00'
-            }),
-            'volumen_comprometido': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0.00'
             }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -237,9 +217,6 @@ class CapacidadProductivaForm(forms.ModelForm):
         labels = {
             'mes': 'Mes',
             'capacidad_mensual_maxima': 'Capacidad Mensual Máxima (kg)',
-            'capacidad_anual_maxima': 'Capacidad Anual Máxima (kg)',
-            'volumen_producido': 'Volumen Producido (kg)',
-            'volumen_comprometido': 'Volumen Comprometido (kg)',
             'observaciones': 'Observaciones'
         }
 
@@ -255,7 +232,7 @@ class ConfiguracionReporteForm(forms.ModelForm):
             'mostrar_disponibilidad', 'mostrar_historial_produccion',
             'periodo_historial_meses', 'tipos_alga', 'sectores_especificos',
             'usar_fecha_personalizada', 'fecha_desde', 'fecha_hasta',
-            'mostrar_graficos', 'incluir_observaciones', 'activo'
+            'incluir_observaciones'
         ]
         widgets = {
             'empresa': forms.TextInput(attrs={
@@ -317,13 +294,7 @@ class ConfiguracionReporteForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'mostrar_graficos': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
             'incluir_observaciones': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
-            'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
         }
@@ -343,7 +314,6 @@ class ConfiguracionReporteForm(forms.ModelForm):
             'usar_fecha_personalizada': 'Usar Rango de Fecha Personalizado',
             'fecha_desde': 'Fecha Desde',
             'fecha_hasta': 'Fecha Hasta',
-            'mostrar_graficos': 'Mostrar Gráficos',
             'incluir_observaciones': 'Incluir Observaciones',
             'activo': 'Configuración Activa'
         }

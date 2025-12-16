@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Modelos de la aplicación de gestión de algas
 """
@@ -11,14 +12,12 @@ class Usuario(models.Model):
     Modelo de usuario del sistema con roles específicos
     
     ROLES Y PERMISOS:
-    - Administrador: Acceso total al sistema
+    - Administrador: Acceso total al sistema, incluyendo configuración de reportes customizables
     - Trabajador: Gestión de producción y registros
-    - Socio: Visualización de reportes y capacidad productiva
     """
     ROLES_CHOICES = [
         ('Administrador', 'Administrador'),
         ('Trabajador', 'Trabajador'),
-        ('Socio', 'Socio'),
     ]
     
     username = models.CharField(
@@ -57,9 +56,6 @@ class Usuario(models.Model):
     
     def es_trabajador(self):
         return self.rol == 'Trabajador'
-    
-    def es_socio(self):
-        return self.rol == 'Socio'
 
 
 class TipoAlga(models.Model):
@@ -108,15 +104,29 @@ class RegistroProduccion(models.Model):
     """
     usuario = models.ForeignKey(
         Usuario,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='registros_produccion',
         verbose_name='Usuario'
     )
+    nombre_usuario = models.CharField(
+        max_length=100,
+        verbose_name='Nombre del Usuario',
+        help_text='Nombre del usuario que realizó el registro'
+    )
     tipo_alga = models.ForeignKey(
         TipoAlga,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='registros',
         verbose_name='Tipo de Alga'
+    )
+    nombre_tipo_alga = models.CharField(
+        max_length=100,
+        verbose_name='Nombre del Tipo de Alga',
+        help_text='Nombre del tipo de alga (preservado incluso si el tipo es eliminado)'
     )
     cantidad_cosechada = models.DecimalField(
         max_digits=10,
@@ -153,20 +163,30 @@ class RegistroProduccion(models.Model):
             models.Index(fields=['tipo_alga', '-fecha_registro']),
         ]
     
+    def save(self, *args, **kwargs):
+        """Guardar registro y actualizar el nombre del tipo de alga"""
+        if self.tipo_alga:
+            self.nombre_tipo_alga = self.tipo_alga.nombre
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return f"{self.tipo_alga} - {self.cantidad_cosechada}kg ({self.fecha_registro.strftime('%d/%m/%Y')})"
+        nombre_tipo = self.nombre_tipo_alga if self.nombre_tipo_alga else (self.tipo_alga.nombre if self.tipo_alga else 'Desconocido')
+        return f"{nombre_tipo} - {self.cantidad_cosechada}kg ({self.fecha_registro.strftime('%d/%m/%Y')})"
     
     @property
     def cantidad_con_factor(self):
         """Cantidad ajustada con el factor de conversión"""
-        return self.cantidad_cosechada * self.tipo_alga.factor_conversion
+        if self.tipo_alga:
+            return self.cantidad_cosechada * self.tipo_alga.factor_conversion
+        return self.cantidad_cosechada
     
     def get_info_completa(self):
         """Retorna información completa del registro (sin volumen_procesado)"""
+        nombre_tipo = self.nombre_tipo_alga if self.nombre_tipo_alga else (self.tipo_alga.nombre if self.tipo_alga else 'Desconocido')
         return {
             'id': self.id,
-            'usuario': self.usuario.username,
-            'tipo_alga': self.tipo_alga.nombre,
+            'usuario': self.usuario.username if self.usuario else self.nombre_usuario,
+            'tipo_alga': nombre_tipo,
             'cantidad_cosechada': self.cantidad_cosechada,
             'sector': self.sector,
             'fecha_registro': self.fecha_registro,
@@ -188,29 +208,6 @@ class CapacidadProductiva(models.Model):
         validators=[MinValueValidator(Decimal('0.00'))],
         verbose_name='Capacidad Mensual Máxima (kg)',
         help_text='Capacidad máxima de producción mensual en kilogramos'
-    )
-    capacidad_anual_maxima = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.00'))],
-        verbose_name='Capacidad Anual Máxima (kg)',
-        help_text='Capacidad máxima de producción anual en kilogramos'
-    )
-    volumen_producido = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
-        verbose_name='Volumen Producido (kg)',
-        help_text='Volumen producido en el mes'
-    )
-    volumen_comprometido = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal('0.00'),
-        validators=[MinValueValidator(Decimal('0.00'))],
-        verbose_name='Volumen Comprometido (kg)',
-        help_text='Volumen ya comprometido con clientes'
     )
     observaciones = models.TextField(
         blank=True,
@@ -239,9 +236,34 @@ class CapacidadProductiva(models.Model):
         return f"Capacidad {self.mes.strftime('%m/%Y')} - {self.capacidad_mensual_maxima}kg"
     
     @property
+    def volumen_producido(self):
+        """Calcula el volumen producido en el mes sumando los registros de producción"""
+        from datetime import datetime
+        # Obtener el primer y último día del mes
+        año = self.mes.year
+        mes = self.mes.month
+        
+        # Calcular el primer día del siguiente mes
+        if mes == 12:
+            siguiente_mes = datetime(año + 1, 1, 1)
+        else:
+            siguiente_mes = datetime(año, mes + 1, 1)
+        
+        primer_dia = datetime(año, mes, 1)
+        
+        # Sumar todas las cantidades cosechadas en ese mes
+        from django.db.models import Sum
+        total = RegistroProduccion.objects.filter(
+            fecha_registro__gte=primer_dia,
+            fecha_registro__lt=siguiente_mes
+        ).aggregate(total=Sum('cantidad_cosechada'))['total']
+        
+        return total or Decimal('0.00')
+    
+    @property
     def disponibilidad_mensual(self):
-        """Capacidad disponible no comprometida"""
-        return self.capacidad_mensual_maxima - self.volumen_comprometido - self.volumen_producido
+        """Capacidad disponible del mes"""
+        return self.capacidad_mensual_maxima - self.volumen_producido
     
     @property
     def porcentaje_utilizado(self):

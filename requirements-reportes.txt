@@ -1,8 +1,0 @@
-# Dependencias opcionales para reportes avanzados
-# Instala estas librerías para habilitar exportación PDF y Excel
-
-# Para generar reportes PDF (compatible con Windows)
-xhtml2pdf>=0.2.11
-
-# Para generar reportes Excel
-openpyxl>=3.1.0

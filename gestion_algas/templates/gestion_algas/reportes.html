@@ -1,11 +1,11 @@
 {% extends "gestion_algas/base.html" %}
 
-{% block title %}Reportes - Sistema Algas{% endblock %}
+{% block title %}Datos de Producción - Sistema Algas{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2>Reportes de Producción</h2>
+        <h2>Datos de Producción</h2>
         <p class="text-muted">Análisis y estadísticas del sistema</p>
     </div>
 </div>
@@ -18,6 +18,21 @@
                 <h5 class="card-title mb-0">Producción por Tipo de Alga</h5>
             </div>
             <div class="card-body">
+                <!-- Buscador -->
+                <form method="GET" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               name="busqueda" 
+                               placeholder="Buscar tipo de alga..." 
+                               value="{{ busqueda }}">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                        {% if busqueda %}
+                        <a href="{% url 'reportes' %}" class="btn btn-secondary">Limpiar</a>
+                        {% endif %}
+                    </div>
+                </form>
+                
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -61,22 +76,66 @@
                             <tr>
                                 <th>Semana</th>
                                 <th>Total Cosechado (kg)</th>
+                                <th>Registros</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for semana in reporte_semanas %}
                             <tr>
-                                <td>Semana {{ semana.semana }}</td>
-                                <td>{{ semana.total_cosechado|floatformat:2|default:"0.00" }}</td>
+                                <td>{{ semana.inicio|date:"d/m/Y" }} - {{ semana.fin|date:"d/m/Y" }}</td>
+                                <td>{{ semana.total_cosechado|floatformat:2 }}</td>
+                                <td>{{ semana.registros_count }}</td>
+                                <td>
+                                    <a href="{% url 'generar_pdf_semanal' %}?inicio={{ semana.inicio|date:"Y-m-d" }}&fin={{ semana.fin|date:"Y-m-d" }}" 
+                                       class="btn btn-sm btn-danger" 
+                                       target="_blank"
+                                       title="Descargar reporte en PDF">
+                                        PDF
+                                    </a>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="2" class="text-center text-muted">No hay datos disponibles</td>
+                                <td colspan="4" class="text-center text-muted">No hay datos disponibles</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Paginación -->
+                {% if reporte_semanas.has_other_pages %}
+                <nav aria-label="Paginación de semanas">
+                    <ul class="pagination justify-content-center mt-3">
+                        {% if reporte_semanas.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ reporte_semanas.previous_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Anterior</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Anterior</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in reporte_semanas.paginator.page_range %}
+                        <li class="page-item {% if reporte_semanas.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if reporte_semanas.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ reporte_semanas.next_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Siguiente</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Siguiente</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
             </div>
         </div>
     </div>

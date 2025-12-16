@@ -1,0 +1,564 @@
+/* === Login Page Styles === */
+.login-page {
+    background: linear-gradient(135deg, #2D4AC8 0%, #4A6FFF 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 580px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo-container {
+    margin-bottom: 20px;
+}
+
+.logo-icon {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+    font-size: 42px;
+    font-weight: 700;
+    color: white;
+    margin: 20px 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-weight: 400;
+}
+
+.login-card {
+    background: white;
+    border-radius: 24px;
+    padding: 48px 56px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    width: 100%;
+}
+
+.form-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0 0 32px 0;
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    pointer-events: none;
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 16px 14px 48px;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 15px;
+    color: #1F2937;
+    transition: all 0.2s ease;
+    background: white;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #2D4AC8;
+    box-shadow: 0 0 0 3px rgba(45, 74, 200, 0.1);
+}
+
+.form-input::placeholder {
+    color: #9CA3AF;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.toggle-password:hover {
+    opacity: 0.7;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0 8px 0 0;
+    cursor: pointer;
+    accent-color: #2D4AC8;
+}
+
+.checkbox-label {
+    font-size: 14px;
+    color: #6B7280;
+    user-select: none;
+}
+
+.forgot-password {
+    font-size: 14px;
+    color: #2D4AC8;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-password:hover {
+    color: #1E3AAB;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 16px;
+    background: #2D4AC8;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(45, 74, 200, 0.4);
+}
+
+.btn-login:hover {
+    background: #1E3AAB;
+    box-shadow: 0 6px 16px rgba(45, 74, 200, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.login-footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .login-card {
+        padding: 32px 24px;
+    }
+    
+    .login-title {
+        font-size: 32px;
+    }
+    
+    .login-subtitle {
+        font-size: 16px;
+    }
+    
+    .form-title {
+        font-size: 20px;
+    }
+}
+
+/* === Dashboard and Main App Styles === */
+body {
+    background-color: #F9FAFB;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    padding: 0;
+}
+
+.dashboard-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1F2937;
+    letter-spacing: -0.5px;
+}
+
+.btn-dashboard-primary {
+    background: #2D4AC8;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(45, 74, 200, 0.25);
+}
+
+.btn-dashboard-primary:hover {
+    background: #1E3AAB;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 74, 200, 0.35);
+}
+
+/* Stats Cards */
+.stats-card {
+    padding: 28px 32px;
+    border-radius: 16px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-card-blue {
+    background: linear-gradient(135deg, #4A6FFF 0%, #5A7FFF 100%);
+}
+
+.stats-card-green {
+    background: linear-gradient(135deg, #10B981 0%, #14B8A6 100%);
+}
+
+.stats-card-purple {
+    background: linear-gradient(135deg, #A855F7 0%, #C084FC 100%);
+}
+
+.stats-label {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.95;
+    margin-bottom: 12px;
+}
+
+.stats-value {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.stats-subtitle {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* Chart Cards */
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px 32px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+}
+
+.chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 24px;
+}
+
+/* Table Card */
+.table-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+    overflow: hidden;
+}
+
+.table-card-header {
+    padding: 24px 32px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.table-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0;
+}
+
+.table-card-body {
+    padding: 0;
+}
+
+/* Modern Table */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.modern-table thead th {
+    background: #F9FAFB;
+    padding: 16px 32px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.modern-table tbody td {
+    padding: 20px 32px;
+    color: #374151;
+    font-size: 15px;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tbody tr:hover {
+    background: #F9FAFB;
+}
+
+/* Improved Bootstrap Tables */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: #F9FAFB;
+    color: #374151;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    border-bottom: 2px solid #E5E7EB;
+    border-top: none;
+}
+
+.table tbody td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    color: #374151;
+    font-size: 14px;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #F9FAFB;
+    transition: background-color 0.2s ease;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #FAFBFC;
+}
+
+.table-striped tbody tr:hover {
+    background-color: #F3F4F6;
+}
+
+.table-bordered {
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table-bordered td,
+.table-bordered th {
+    border: 1px solid #F3F4F6;
+}
+
+.table-sm td,
+.table-sm th {
+    padding: 12px 16px;
+    font-size: 13px;
+}
+
+/* Table Actions */
+.table .btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.table .badge {
+    padding: 6px 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.badge-alga {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #DBEAFE;
+    color: #1E40AF;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 64px 32px;
+}
+
+.empty-state svg {
+    margin-bottom: 20px;
+}
+
+.empty-state-text {
+    color: #6B7280;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Navbar Customization */
+.navbar-dark {
+    background: linear-gradient(135deg, #2D4AC8 0%, #4A6FFF 100%) !important;
+    box-shadow: 0 2px 8px rgba(45, 74, 200, 0.15);
+    padding: 16px 0;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: -0.5px;
+}
+
+.nav-link {
+    font-weight: 500;
+    padding: 8px 16px !important;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Utility Classes */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
+}
+
+.card-header {
+    background-color: #FAFBFC;
+    border-bottom: 1px solid #E5E7EB;
+    padding: 20px 24px;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 0;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.alert {
+    border-radius: 12px;
+    border: none;
+}
+
+/* Table responsive wrapper */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}

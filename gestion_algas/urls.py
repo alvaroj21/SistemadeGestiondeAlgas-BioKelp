@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 URLs de la aplicación de gestión de algas
 """
@@ -17,10 +18,14 @@ urlpatterns = [
     
     # Reportes
     path('reportes/', views.reportes, name='reportes'),
+    path('reportes/pdf-semanal/', views.generar_pdf_semanal, name='generar_pdf_semanal'),
     
     # Usuarios
     path('usuarios/', views.usuarios, name='usuarios'),
     path('usuarios/eliminar/<int:usuario_id>/', views.eliminar_usuario, name='eliminar_usuario'),
+    
+    # Perfil de Usuario
+    path('perfil/', views.perfil_usuario, name='perfil_usuario'),
     
     # Tipos de Alga
     path('tipos-alga/', views.tipos_alga, name='tipos_alga'),

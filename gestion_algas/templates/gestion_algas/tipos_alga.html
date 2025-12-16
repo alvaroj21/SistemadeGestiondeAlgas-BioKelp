@@ -14,8 +14,8 @@
 <div class="row mb-4">
     <div class="col-lg-5">
         <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="card-title mb-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0 text-white">
                     {% if editando %}
                         Editar Tipo de Alga
                     {% else %}
@@ -63,7 +63,7 @@
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-primary">
                             {% if editando %}
                                 Actualizar Tipo de Alga
                             {% else %}
@@ -85,9 +85,24 @@
     <div class="col-lg-7">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Tipos de Alga Registrados ({{ tipos_alga|length }})</h5>
+                <h5 class="card-title mb-0">Tipos de Alga Registrados ({{ tipos_alga.paginator.count }})</h5>
             </div>
             <div class="card-body">
+                <!-- Buscador -->
+                <form method="GET" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               name="busqueda" 
+                               placeholder="Buscar por nombre o descripción..." 
+                               value="{{ busqueda }}">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                        {% if busqueda %}
+                        <a href="{% url 'tipos_alga' %}" class="btn btn-secondary">Limpiar</a>
+                        {% endif %}
+                    </div>
+                </form>
+                
                 {% if tipos_alga %}
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -121,39 +136,33 @@
                                     <span class="badge bg-info">{{ tipo.registros.count }}</span>
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm" role="group">
+                                    <div class="d-flex flex-column gap-1">
                                         <a href="{% url 'editar_tipo_alga' tipo.id %}" 
-                                           class="btn btn-outline-primary"
-                                           title="Editar">
+                                           class="btn btn-sm btn-primary"
+                                           title="Editar tipo de alga">
                                             Editar
                                         </a>
                                         
                                         <form method="POST" 
                                               action="{% url 'toggle_tipo_alga' tipo.id %}" 
-                                              style="display: inline;">
+                                              style="margin: 0;">
                                             {% csrf_token %}
                                             <button type="submit" 
-                                                    class="btn btn-outline-warning"
-                                                    title="{% if tipo.activo %}Desactivar{% else %}Activar{% endif %}">
+                                                    class="btn btn-sm w-100 {% if tipo.activo %}btn-warning{% else %}btn-success{% endif %}"
+                                                    title="{% if tipo.activo %}Desactivar{% else %}Activar{% endif %} tipo de alga">
                                                 {% if tipo.activo %}Desactivar{% else %}Activar{% endif %}
                                             </button>
                                         </form>
                                         
-                                        {% if tipo.registros.count == 0 %}
                                         <form method="POST" 
                                               action="{% url 'eliminar_tipo_alga' tipo.id %}" 
-                                              style="display: inline;"
-                                              onsubmit="return confirm('¿Estás seguro de eliminar {{ tipo.nombre }}?');">
+                                              style="margin: 0;"
+                                              onsubmit="return confirm('¿Estás seguro de eliminar {{ tipo.nombre }}? Los registros existentes conservarán el nombre del tipo.');">
                                             {% csrf_token %}
-                                                <button type="submit" class="btn" title="Eliminar">
-                                                Borrar
+                                            <button type="submit" class="btn btn-sm btn-danger w-100" title="Eliminar tipo de alga">
+                                                Eliminar
                                             </button>
                                         </form>
-                                        {% else %}
-                                            <button class="btn" disabled title="No se puede eliminar (tiene registros)">
-                                            borrar
-                                        </button>
-                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -161,10 +170,48 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Paginación -->
+                {% if tipos_alga.has_other_pages %}
+                <nav aria-label="Paginación de tipos de alga">
+                    <ul class="pagination justify-content-center mt-3">
+                        {% if tipos_alga.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ tipos_alga.previous_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Anterior</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Anterior</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in tipos_alga.paginator.page_range %}
+                        <li class="page-item {% if tipos_alga.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if tipos_alga.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ tipos_alga.next_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}">Siguiente</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Siguiente</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
                 {% else %}
                 <div class="alert alert-info text-center">
-                    <h5>No hay tipos de alga registrados</h5>
-                    <p class="mb-0">Crea el primer tipo de alga usando el formulario de la izquierda.</p>
+                    <h5>No se encontraron tipos de alga</h5>
+                    {% if busqueda %}
+                    <p class="mb-0">No hay resultados para "{{ busqueda }}".</p>
+                    {% else %}
+                    <p class="mb-0">Crea el primer tipo de alga usando el formulario.</p>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
