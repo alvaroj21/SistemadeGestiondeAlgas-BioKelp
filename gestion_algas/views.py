@@ -392,12 +392,16 @@ def dashboard(request):
             total=Sum('registros__cantidad_cosechada')
         ).filter(total__gt=0).order_by('-total')
         
-        # Capacidad total (usar la capacidad mensual más reciente o un valor por defecto)
-        capacidad_reciente = CapacidadProductiva.objects.order_by('-mes').first()
-        if capacidad_reciente:
-            capacidad_total = capacidad_reciente.capacidad_mensual_maxima
+        # Capacidad del mes actual
+        capacidad_mes_actual = CapacidadProductiva.objects.filter(
+            mes__year=inicio_mes.year,
+            mes__month=inicio_mes.month
+        ).first()
+        
+        if capacidad_mes_actual:
+            capacidad_total = capacidad_mes_actual.capacidad_mensual_maxima
         else:
-            capacidad_total = 2400  # Valor por defecto
+            capacidad_total = 2400  # Valor por defecto si no hay capacidad definida para el mes
         
         # Calcular porcentaje de capacidad utilizada
         if capacidad_total > 0:
@@ -450,12 +454,16 @@ def dashboard(request):
             total=Sum('registros__cantidad_cosechada')
         ).filter(total__gt=0).order_by('-total')
         
-        # Capacidad (usar la capacidad mensual más reciente o un valor por defecto)
-        capacidad_reciente = CapacidadProductiva.objects.order_by('-mes').first()
-        if capacidad_reciente:
-            capacidad_total = capacidad_reciente.capacidad_mensual_maxima
+        # Capacidad del mes actual
+        capacidad_mes_actual = CapacidadProductiva.objects.filter(
+            mes__year=inicio_mes.year,
+            mes__month=inicio_mes.month
+        ).first()
+        
+        if capacidad_mes_actual:
+            capacidad_total = capacidad_mes_actual.capacidad_mensual_maxima
         else:
-            capacidad_total = 2400  # Valor por defecto
+            capacidad_total = 2400  # Valor por defecto si no hay capacidad definida para el mes
         
         if capacidad_total > 0:
             porcentaje_capacidad = round((float(produccion_total) / float(capacidad_total)) * 100, 1)
