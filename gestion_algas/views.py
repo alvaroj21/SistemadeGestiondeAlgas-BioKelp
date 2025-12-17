@@ -1002,7 +1002,18 @@ def generar_reporte_personalizado(request, config_id):
     capacidad_actual = None
     capacidad_convertida = None
     if configuracion.mostrar_capacidad_instalada or configuracion.mostrar_disponibilidad:
-        capacidad_actual = CapacidadProductiva.objects.order_by('-mes').first()
+        # Intentar obtener la capacidad del mes del periodo final del reporte
+        capacidad_actual = CapacidadProductiva.objects.filter(
+            mes__year=fecha_hasta.year,
+            mes__month=fecha_hasta.month
+        ).first()
+        
+        # Si no existe capacidad para ese mes, buscar la más cercana anterior
+        if not capacidad_actual:
+            capacidad_actual = CapacidadProductiva.objects.filter(
+                mes__lte=fecha_hasta
+            ).order_by('-mes').first()
+        
         if capacidad_actual:
             # Convertir valores según unidad de medida
             capacidad_convertida = {
