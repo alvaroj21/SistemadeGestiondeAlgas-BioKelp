@@ -80,6 +80,9 @@
                                 <th>Tipo Alga</th>
                                 <th>Cantidad (kg)</th>
                                 <th>Sector</th>
+                                {% if user.rol == 'Administrador' %}
+                                <th>Acciones</th>
+                                {% endif %}
                             </tr>
                         </thead>
                         <tbody>
@@ -94,6 +97,15 @@
                                 </td>
                                 <td><strong>{{ registro.cantidad_cosechada|floatformat:2 }}</strong></td>
                                 <td>{{ registro.sector }}</td>
+                                {% if user.rol == 'Administrador' %}
+                                <td>
+                                    <button onclick="confirmarEliminacion({{ registro.id }}, '{{ registro.tipo_alga.nombre }}', '{{ registro.cantidad_cosechada }}')" 
+                                            class="btn btn-sm btn-danger" 
+                                            title="Eliminar registro">
+                                        <i class="fas fa-trash"></i> Borrar
+                                    </button>
+                                </td>
+                                {% endif %}
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -116,6 +128,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Función para confirmar eliminación
+function confirmarEliminacion(registroId, tipoAlga, cantidad) {
+    if (confirm(`¿Está seguro de eliminar este registro?\n\n${cantidad} kg de ${tipoAlga}\n\nEsta acción no se puede deshacer.`)) {
+        window.location.href = `/registro/eliminar/${registroId}/`;
+    }
+}
+
 // Weekly Production Chart
 const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
 new Chart(weeklyCtx, {

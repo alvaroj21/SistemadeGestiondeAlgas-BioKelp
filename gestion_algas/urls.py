@@ -15,6 +15,7 @@ urlpatterns = [
     
     # Producción
     path('registro/', views.registro_produccion, name='registro_produccion'),
+    path('registro/eliminar/<int:registro_id>/', views.eliminar_registro, name='eliminar_registro'),
     
     # Reportes
     path('reportes/', views.reportes, name='reportes'),

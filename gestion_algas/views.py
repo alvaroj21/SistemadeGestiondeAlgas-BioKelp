@@ -519,6 +519,25 @@ def registro_produccion(request):
     return render(request, 'gestion_algas/registro_produccion.html', context)
 
 
+@solo_admin
+def eliminar_registro(request, registro_id):
+    """Eliminar un registro de producción (solo admin)"""
+    registro = get_object_or_404(RegistroProduccion, id=registro_id)
+    
+    # Guardar info para el mensaje
+    tipo_alga = registro.tipo_alga.nombre if registro.tipo_alga else "Desconocido"
+    cantidad = registro.cantidad_cosechada
+    fecha = registro.fecha_registro.strftime('%d/%m/%Y')
+    
+    registro.delete()
+    messages.success(
+        request, 
+        f'Registro eliminado: {cantidad} kg de {tipo_alga} del {fecha}'
+    )
+    
+    return redirect('dashboard')
+
+
 @requiere_permiso('reportes', 'reportes_basicos')
 def reportes(request):
     """Vista de reportes y estadísticas (Admin y Trabajador)"""
