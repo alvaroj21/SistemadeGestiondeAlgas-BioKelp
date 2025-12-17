@@ -293,7 +293,6 @@ class ConfiguracionReporte(models.Model):
     FORMATOS_REPORTE = [
         ('pdf', 'PDF'),
         ('excel', 'Excel'),
-        ('ambos', 'PDF y Excel'),
     ]
     
     empresa = models.CharField(
